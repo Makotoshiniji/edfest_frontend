@@ -2,7 +2,13 @@
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ["Sarabun", "sans-serif"],
+        prompt: ["Prompt", "sans-serif"],
+        sarabun: ["Sarabun", "sans-serif"],
+      },
+    },
   },
   plugins: [],
 };

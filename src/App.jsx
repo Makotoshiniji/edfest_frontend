@@ -13,6 +13,9 @@ import {
   ArrowRight,
   Star,
   Heart,
+  Facebook,
+  Instagram,
+  Mail,
 } from "lucide-react";
 
 const App = () => {
@@ -222,9 +225,9 @@ const App = () => {
 
             {/* Desktop Menu */}
             <div className="hidden md:flex items-center space-x-8">
-              {["หน้าหลัก", "เกี่ยวกับงาน", "กำหนดการ", "ติดต่อเรา"].map(
+              {["หน้าหลัก", "เกี่ยวกับงาน", "หลักสูตร", "ติดต่อเรา"].map(
                 (item, index) => {
-                  const sectionIds = ["home", "about", "schedule", "contact"];
+                  const sectionIds = ["home", "about", "course", "contact"];
                   return (
                     <button
                       key={index}
@@ -269,13 +272,13 @@ const App = () => {
           }`}
         >
           <div className="px-6 py-8 space-y-4">
-            {["หน้าหลัก", "เกี่ยวกับงาน", "กำหนดการ", "ติดต่อเรา"].map(
+            {["หน้าหลัก", "เกี่ยวกับงาน", "หลักสูตร", "ติดต่อเรา"].map(
               (item, index) => (
                 <button
                   key={index}
                   onClick={() =>
                     scrollToSection(
-                      ["home", "about", "schedule", "contact"][index]
+                      ["home", "about", "course", "contact"][index]
                     )
                   }
                   className="block w-full text-left font-prompt text-lg font-medium text-gray-600 hover:text-orange-600 py-2 border-b border-gray-50"
@@ -343,7 +346,7 @@ const App = () => {
               </div>
 
               {/* Trust Indicators */}
-              <div className="hero-animate-up delay-300 mt-12 flex items-center justify-center lg:justify-start gap-8 opacity-70">
+              {/* <div className="hero-animate-up delay-300 mt-12 flex items-center justify-center lg:justify-start gap-8 opacity-70">
                 <div className="flex -space-x-3">
                   {[1, 2, 3, 4].map((i) => (
                     <div
@@ -365,6 +368,43 @@ const App = () => {
                   <p className="font-bold text-gray-800">2,500+</p>
                   <p>นักเรียนที่เข้าร่วม</p>
                 </div>
+              </div> */}
+              {/* Option 1: Live Status & Limited Seats */}
+              <div className="hero-animate-up delay-300 mt-10 flex flex-col sm:flex-row gap-6">
+                {/* Status Box */}
+                <div className="flex items-center gap-4 bg-orange-50/80 backdrop-blur-sm p-4 rounded-2xl border border-orange-100">
+                  <div className="relative">
+                    <span className="absolute inset-0 bg-green-400 rounded-full animate-ping opacity-75"></span>
+                    <div className="relative w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-800 font-prompt">
+                      กำลังเปิดรับสมัคร
+                    </p>
+                    <p className="text-xs text-gray-500 font-sarabun">
+                      เหลือที่นั่งจำกัด 50 คนสุดท้าย
+                    </p>
+                  </div>
+                </div>
+
+                {/* Benefit Badges */}
+                <div className="flex items-center gap-3">
+                  <div className="flex -space-x-2">
+                    <div className="w-8 h-8 rounded-full bg-white border border-gray-100 flex items-center justify-center shadow-sm">
+                      <Star size={14} className="text-yellow-500" />
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-white border border-gray-100 flex items-center justify-center shadow-sm">
+                      <GraduationCap size={14} className="text-orange-500" />
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-500 font-sarabun">
+                    ได้รับ{" "}
+                    <span className="font-bold text-orange-600">
+                      เกียรติบัตร
+                    </span>{" "}
+                    ทุกที่นั่ง
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -376,7 +416,7 @@ const App = () => {
                   <div className="absolute inset-0 bg-gradient-to-tr from-orange-500/20 to-transparent pointer-events-none z-10"></div>
 
                   <img
-                    src="https://images.unsplash.com/photo-1523580494863-6f3031224c94?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
+                    src="assets/picture/ED0-1-of-29.jpg"
                     alt="Education Activity"
                     className="w-full h-full object-cover transform transition-transform duration-1000 group-hover:scale-105"
                   />
@@ -483,7 +523,7 @@ const App = () => {
       </section>
 
       {/* --- Gallery / Schedule Preview --- */}
-      <section id="schedule" className="py-24 bg-gray-50 overflow-hidden">
+      <section id="course" className="py-24 bg-gray-50 overflow-hidden">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-end justify-between mb-12">
             <div className="slide-in-left">
@@ -597,19 +637,34 @@ const App = () => {
               <p className="text-gray-500 font-light leading-relaxed mb-6 max-w-sm">
                 คณะศึกษาศาสตร์ มหาวิทยาลัยขอนแก่น
                 <br />
-                แหล่งเรียนรู้ชั้นนำ
-                เพื่อสร้างสรรค์นวัตกรรมทางการศึกษาและพัฒนาวิชาชีพครูสู่สากล
+                แหล่งเรียนรู้ชั้นนำระดับอาเซียนที่มุ่งเน้นนวัตกรรมการศึกษาเพื่อการพัฒนาที่ยั่งยืน
               </p>
               <div className="flex space-x-4">
                 {/* Social Icons with Hover Glow */}
-                {["Facebook", "Youtube", "Twitter"].map((social, i) => (
-                  <button
+                {[
+                  {
+                    Icon: Facebook,
+                    link: "https://www.facebook.com/samoedkku",
+                    label: "Facebook",
+                  },
+                  {
+                    Icon: Instagram,
+                    link: "https://www.instagram.com/samoedkku/",
+                    label: "Instagram",
+                  },
+                  { Icon: Mail, link: "#", label: "Email" },
+                ].map((social, i) => (
+                  <a
                     key={i}
+                    href={social.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-orange-600 hover:border-orange-200 hover:shadow-lg hover:shadow-orange-100 transition-all duration-300 transform hover:-translate-y-1"
                   >
-                    <span className="sr-only">{social}</span>
-                    <div className="w-4 h-4 bg-current rounded-sm"></div>
-                  </button>
+                    <span className="sr-only">{social.label}</span>
+                    {/* เรียกใช้ Component ไอคอนตรงนี้ */}
+                    <social.Icon size={20} />
+                  </a>
                 ))}
               </div>
             </div>
@@ -684,7 +739,10 @@ const App = () => {
           </div>
 
           <div className="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center text-gray-400 text-sm font-light">
-            <p>&copy; 2024 Faculty of Education, Khon Kaen University.</p>
+            <p>
+              © 2026 ED KKU OPENHOUSE. All rights reserved. Developed & Powered
+              by Computer Education, KKU.
+            </p>
             <div className="mt-4 md:mt-0 space-x-6">
               <a href="#" className="hover:text-orange-600 transition-colors">
                 Privacy Policy
