@@ -17,6 +17,7 @@ import {
   Instagram,
   Mail,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const App = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -243,12 +244,24 @@ const App = () => {
               <div className="h-6 w-px bg-gray-200 mx-2"></div>
 
               <div className="flex items-center space-x-3">
-                <button className="font-prompt text-sm font-medium px-5 py-2 rounded-full border border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-600 transition-all duration-300 btn-secondary-hover bg-white">
+                {/* <button className="font-prompt text-sm font-medium px-5 py-2 rounded-full border border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-600 transition-all duration-300 btn-secondary-hover bg-white">
                   เข้าสู่ระบบ
-                </button>
-                <button className="font-prompt text-sm font-medium px-5 py-2 rounded-full bg-orange-600 text-white shadow-md shadow-orange-100 btn-primary-hover">
+                </button> */}
+                <Link
+                  to="/login"
+                  className="font-prompt text-sm font-medium px-5 py-2 rounded-full border border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-600 transition-all duration-300 btn-secondary-hover bg-white"
+                >
+                  เข้าสู่ระบบ
+                </Link>
+                {/* <button className="font-prompt text-sm font-medium px-5 py-2 rounded-full bg-orange-600 text-white shadow-md shadow-orange-100 btn-primary-hover">
                   สมัครเข้าร่วม
-                </button>
+                </button> */}
+                <Link
+                  to="/register"
+                  className="font-prompt text-sm font-medium px-5 py-2 rounded-full bg-orange-600 text-white shadow-md shadow-orange-100 btn-primary-hover inline-flex items-center justify-center"
+                >
+                  สมัครเข้าร่วม
+                </Link>
               </div>
             </div>
 
@@ -290,9 +303,15 @@ const App = () => {
               <button className="w-full py-3 border border-orange-200 text-orange-600 font-bold rounded-xl bg-orange-50/50">
                 เข้าสู่ระบบ
               </button>
-              <button className="w-full py-3 bg-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-200">
+              {/* <button className="w-full py-3 bg-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-200">
                 สมัครเข้าร่วมกิจกรรม
-              </button>
+              </button> */}
+              <Link
+                to="/test"
+                className="w-full py-3 bg-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-200"
+              >
+                สมัครเข้าร่วมกิจกรรม
+              </Link>
             </div>
           </div>
         </div>
@@ -313,7 +332,7 @@ const App = () => {
               <div className="hero-animate-up inline-flex items-center px-3 py-1 rounded-full bg-orange-100 border border-orange-200 mb-6">
                 <span className="w-2 h-2 rounded-full bg-orange-500 mr-2 animate-pulse"></span>
                 <span className="text-xs font-semibold text-orange-700 tracking-wide uppercase">
-                  KKU Open House 2026
+                  KKU Education Open House 2026
                 </span>
               </div>
 
@@ -324,10 +343,19 @@ const App = () => {
                 </span>
               </h1>
 
-              <p className="hero-animate-up delay-200 text-lg text-gray-600 font-sarabun font-light leading-relaxed mb-10 max-w-xl mx-auto lg:mx-0">
+              {/* <p className="hero-animate-up delay-200 text-lg text-gray-600 font-sarabun font-light leading-relaxed mb-10 max-w-xl mx-auto lg:mx-0">
                 ยินดีต้อนรับสู่คณะศึกษาศาสตร์ มหาวิทยาลัยขอนแก่น
-                พื้นที่แห่งการเรียนรู้และแรงบันดาลใจ
-                มาร่วมค้นหาตัวตนและเตรียมความพร้อมสู่อนาคตที่สดใส
+                <br />
+                แหล่งเรียนรู้ชั้นนำระดับอาเซียนที่มุ่งเน้นนวัตกรรมการศึกษาเพื่อการพัฒนาที่ยั่งยืน
+              </p> */}
+
+              <p className="hero-animate-up delay-200 text-gray-600 font-sarabun font-light leading-relaxed mb-10 text-base md:text-lg max-w-xl mx-auto lg:mx-0 text-center lg:text-left">
+                ยินดีต้อนรับสู่คณะศึกษาศาสตร์ มหาวิทยาลัยขอนแก่น
+                {/* ซ่อน br ในมือถือ (hidden) และแสดงผลในจอ md ขึ้นไป (md:block) */}
+                <br className="hidden md:block" />
+                แหล่งเรียนรู้ชั้นนำระดับอาเซียนที่มุ่งเน้นนวัตกรรมการศึกษา{" "}
+                <br className="hidden md:block" />
+                เพื่อการพัฒนาที่ยั่งยืน
               </p>
 
               <div className="hero-animate-up delay-300 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
@@ -431,7 +459,7 @@ const App = () => {
                             Workshop การสอน
                           </p>
                           <p className="text-xs text-gray-500">
-                            ทดลองเป็นครูยุคใหม่
+                            ทดลองเป็นครูยุคใหม่(แปะไว้ก่อน)
                           </p>
                         </div>
                       </div>
@@ -581,69 +609,113 @@ const App = () => {
       {/* </div>
         </div>
       </section> */}
-      {/* --- Courses / Majors Section (Compact Version) --- */}
+      {/* --- Courses / Majors Section (Redesigned) --- */}
       <section
-        id="courses"
-        className="py-16 bg-gray-50 relative overflow-hidden"
+        id="course"
+        className="py-24 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden"
       >
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header แบบกะทัดรัด */}
-          <div className="flex flex-col md:flex-row items-center justify-between mb-10 gap-4 slide-in-left">
-            <div>
-              <h2 className="font-prompt text-2xl md:text-3xl font-bold text-gray-900">
-                หลักสูตรที่ <span className="text-orange-600">เปิดสอน</span>
-              </h2>
-              <p className="text-gray-500 font-light text-sm mt-1">
-                11 วิชาเอกคุณภาพ เพื่อสร้างครูมืออาชีพ
-              </p>
-            </div>
+        {/* Background Pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.03] pointer-events-none"
+          style={{
+            backgroundImage: "radial-gradient(#ea580c 1px, transparent 1px)",
+            backgroundSize: "24px 24px",
+          }}
+        ></div>
 
-            {/* Tag รับรอง (ย้ายมาขวาเพื่อประหยัดที่แนวตั้ง) */}
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-orange-100/50 rounded-full text-orange-700 text-xs font-medium border border-orange-100">
-              <Star size={14} className="fill-orange-600 text-orange-600" />
-              <span>หลักสูตรได้รับการรับรอง</span>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Header แบบ Centered ดูพรีเมียม */}
+          <div className="text-center max-w-3xl mx-auto mb-16 fade-in-section">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100/50 border border-orange-200 text-orange-700 text-xs font-bold uppercase tracking-wider mb-4">
+              <Star size={12} className="fill-orange-600" />
+              Academic Programs
             </div>
+            <h2 className="font-prompt text-3xl md:text-5xl font-bold text-gray-900 mb-6">
+              หลักสูตรที่{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-orange-400">
+                เปิดสอน
+              </span>
+            </h2>
+            <p className="text-gray-500 text-lg font-light leading-relaxed">
+              มุ่งเน้นการสร้างครูมืออาชีพที่มีความเชี่ยวชาญเฉพาะด้าน
+              ด้วยหลักสูตรที่ทันสมัยและได้รับการรับรองมาตรฐานสากล
+            </p>
           </div>
 
-          {/* Grid แบบ Compact (ไอคอนเล็ก + ข้อความแนวนอน) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {/* Grid Cards แบบใหม่ */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {[
-              "วิชาเอกคณิตศาสตรศึกษา",
-              "วิชาเอกวิทยาศาสตร์ศึกษา",
-              "วิชาเอกการสอนภาษาไทย",
-              "วิชาเอกสังคมศึกษา",
-              "วิชาเอกศิลปศึกษา",
-              "วิชาเอกพลศึกษา",
-              "วิชาเอกคอมพิวเตอร์ศึกษา",
-              "วิชาเอกการสอนภาษาญี่ปุ่น",
-              "วิชาเอกเดี่ยวการประถมศึกษา",
-              "วิชาเอกคู่การศึกษาปฐมวัยและประถมศึกษา",
-              "วิชาเอกดนตรีศึกษา",
+              "คณิตศาสตรศึกษา",
+              "วิทยาศาสตร์ศึกษา",
+              "การสอนภาษาไทย",
+              "สังคมศึกษา",
+              "ศิลปศึกษา",
+              "พลศึกษา",
+              "คอมพิวเตอร์ศึกษา",
+              "การสอนภาษาญี่ปุ่น",
+              "เดี่ยวการประถมศึกษา",
+              "คู่ปฐมวัยและประถมศึกษา", // ตัดคำว่า "วิชาเอกคู่" ออกเพื่อให้บรรทัดสวยขึ้น (ถ้าต้องการใส่คืนบอกได้ครับ)
+              "ดนตรีศึกษา",
             ].map((course, index) => (
               <div
                 key={index}
-                className="fade-in-section bg-white rounded-xl p-3 border border-gray-100 shadow-sm hover:shadow-md hover:border-orange-200 transition-all duration-300 group hover:-translate-y-0.5 cursor-default flex items-center gap-3"
-                style={{ transitionDelay: `${index * 30}ms` }}
+                className="fade-in-section group relative bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-orange-100/50 transition-all duration-300 cursor-pointer overflow-hidden"
+                style={{ transitionDelay: `${index * 50}ms` }}
               >
-                {/* Small Icon Box */}
-                <div className="shrink-0 w-8 h-8 rounded-lg bg-orange-50 text-orange-500 flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-colors duration-300">
-                  <BookOpen size={16} />
-                </div>
+                {/* Hover Accent Line */}
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-orange-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
 
-                {/* Text */}
-                <span className="font-prompt text-sm md:text-base font-medium text-gray-700 group-hover:text-orange-700 transition-colors">
-                  {course}
-                </span>
+                <div className="flex flex-col h-full justify-between">
+                  <div>
+                    {/* Icon */}
+                    <div className="w-12 h-12 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center mb-4 group-hover:bg-orange-500 group-hover:text-white transition-colors duration-300">
+                      <BookOpen size={24} />
+                    </div>
+
+                    {/* Prefix Text */}
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">
+                      วิชาเอก
+                    </span>
+
+                    {/* Title */}
+                    <h3 className="font-prompt text-xl font-bold text-gray-800 group-hover:text-orange-600 transition-colors mt-1 mb-2">
+                      {course}
+                    </h3>
+                  </div>
+
+                  {/* Bottom Action */}
+                  <div className="pt-4 mt-2 border-t border-gray-50 flex items-center justify-between text-sm text-gray-500">
+                    <span>รายละเอียดหลักสูตร</span>
+                    <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-orange-100 group-hover:translate-x-1 transition-all">
+                      <ArrowRight
+                        size={14}
+                        className="text-gray-400 group-hover:text-orange-600"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             ))}
-          </div>
 
-          {/* Mobile Tag (โชว์เฉพาะมือถือ) */}
-          <div className="md:hidden mt-6 flex justify-center">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-orange-100/50 rounded-full text-orange-700 text-xs font-medium border border-orange-100">
-              <Star size={14} className="fill-orange-600 text-orange-600" />
-              <span>หลักสูตรได้รับการรับรอง</span>
-            </div>
+            {/* การ์ดใบสุดท้าย: สมัครเรียน */}
+            {/* <div
+              className="fade-in-section group relative bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-6 shadow-lg shadow-orange-200 cursor-pointer flex flex-col justify-center items-center text-center text-white overflow-hidden"
+              style={{ transitionDelay: "600ms" }}
+            >
+              <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mb-4 backdrop-blur-sm group-hover:scale-110 transition-transform">
+                <GraduationCap size={32} />
+              </div>
+              <h3 className="font-prompt text-xl font-bold mb-1">
+                สนใจสมัครเรียน?
+              </h3>
+              <p className="text-orange-100 text-sm mb-4">
+                ดูรายละเอียดการรับสมัคร
+              </p>
+              <span className="inline-flex items-center font-bold text-sm bg-white text-orange-600 px-4 py-2 rounded-full shadow-sm group-hover:shadow-md transition-all">
+                คลิกที่นี่ <ChevronRight size={16} className="ml-1" />
+              </span>
+            </div> */}
           </div>
         </div>
       </section>
