@@ -200,7 +200,6 @@ const App = () => {
           }
         `}
       </style>
-
       {/* --- Navbar --- */}
       <nav className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-orange-100/50 transition-all duration-300">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -218,7 +217,7 @@ const App = () => {
                   ED KKU
                 </span>
                 <span className="font-sarabun text-xs text-gray-500 tracking-wide">
-                  Open House 2024
+                  Open House 2026
                 </span>
               </div>
             </div>
@@ -298,7 +297,6 @@ const App = () => {
           </div>
         </div>
       </nav>
-
       {/* --- Hero Section --- */}
       <header
         id="home"
@@ -315,7 +313,7 @@ const App = () => {
               <div className="hero-animate-up inline-flex items-center px-3 py-1 rounded-full bg-orange-100 border border-orange-200 mb-6">
                 <span className="w-2 h-2 rounded-full bg-orange-500 mr-2 animate-pulse"></span>
                 <span className="text-xs font-semibold text-orange-700 tracking-wide uppercase">
-                  KKU Open House 2024
+                  KKU Open House 2026
                 </span>
               </div>
 
@@ -456,7 +454,6 @@ const App = () => {
           </div>
         </div>
       </header>
-
       {/* --- Features Section --- */}
       <section id="about" className="py-24 bg-white relative">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -521,9 +518,8 @@ const App = () => {
           </div>
         </div>
       </section>
-
       {/* --- Gallery / Schedule Preview --- */}
-      <section id="course" className="py-24 bg-gray-50 overflow-hidden">
+      {/* <section id="course" className="py-24 bg-gray-50 overflow-hidden">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-end justify-between mb-12">
             <div className="slide-in-left">
@@ -543,17 +539,17 @@ const App = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 h-[400px] md:h-[500px]">
-            {/* Gallery Grid Items with Staggered Animation */}
-            <div className="col-span-2 row-span-2 rounded-3xl overflow-hidden relative group cursor-pointer fade-in-section">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 h-[400px] md:h-[500px]"> */}
+      {/* Gallery Grid Items with Staggered Animation */}
+      {/* <div className="col-span-2 row-span-2 rounded-3xl overflow-hidden relative group cursor-pointer fade-in-section">
               <img
                 src="https://images.unsplash.com/photo-1544531586-fde5298cdd40?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
                 alt="Activity"
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               />
               <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
-            </div>
-            <div
+            </div> */}
+      {/* <div
               className="col-span-1 row-span-1 rounded-3xl overflow-hidden relative group cursor-pointer fade-in-section"
               style={{ transitionDelay: "100ms" }}
             >
@@ -562,8 +558,8 @@ const App = () => {
                 alt="Activity"
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               />
-            </div>
-            <div
+            </div> */}
+      {/* <div
               className="col-span-1 row-span-1 rounded-3xl overflow-hidden relative group cursor-pointer fade-in-section"
               style={{ transitionDelay: "200ms" }}
             >
@@ -572,23 +568,88 @@ const App = () => {
                 alt="Activity"
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               />
-            </div>
-            <div
+            </div> */}
+      {/* <div
               className="col-span-2 row-span-1 rounded-3xl overflow-hidden relative group cursor-pointer fade-in-section"
               style={{ transitionDelay: "300ms" }}
             >
-              <img
-                src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+              <img src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
                 alt="Activity"
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
               />
+            </div> */}
+      {/* </div>
+        </div>
+      </section> */}
+      {/* --- Courses / Majors Section (Compact Version) --- */}
+      <section
+        id="courses"
+        className="py-16 bg-gray-50 relative overflow-hidden"
+      >
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header แบบกะทัดรัด */}
+          <div className="flex flex-col md:flex-row items-center justify-between mb-10 gap-4 slide-in-left">
+            <div>
+              <h2 className="font-prompt text-2xl md:text-3xl font-bold text-gray-900">
+                หลักสูตรที่ <span className="text-orange-600">เปิดสอน</span>
+              </h2>
+              <p className="text-gray-500 font-light text-sm mt-1">
+                11 วิชาเอกคุณภาพ เพื่อสร้างครูมืออาชีพ
+              </p>
+            </div>
+
+            {/* Tag รับรอง (ย้ายมาขวาเพื่อประหยัดที่แนวตั้ง) */}
+            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-orange-100/50 rounded-full text-orange-700 text-xs font-medium border border-orange-100">
+              <Star size={14} className="fill-orange-600 text-orange-600" />
+              <span>หลักสูตรได้รับการรับรอง</span>
+            </div>
+          </div>
+
+          {/* Grid แบบ Compact (ไอคอนเล็ก + ข้อความแนวนอน) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {[
+              "วิชาเอกคณิตศาสตรศึกษา",
+              "วิชาเอกวิทยาศาสตร์ศึกษา",
+              "วิชาเอกการสอนภาษาไทย",
+              "วิชาเอกสังคมศึกษา",
+              "วิชาเอกศิลปศึกษา",
+              "วิชาเอกพลศึกษา",
+              "วิชาเอกคอมพิวเตอร์ศึกษา",
+              "วิชาเอกการสอนภาษาญี่ปุ่น",
+              "วิชาเอกเดี่ยวการประถมศึกษา",
+              "วิชาเอกคู่การศึกษาปฐมวัยและประถมศึกษา",
+              "วิชาเอกดนตรีศึกษา",
+            ].map((course, index) => (
+              <div
+                key={index}
+                className="fade-in-section bg-white rounded-xl p-3 border border-gray-100 shadow-sm hover:shadow-md hover:border-orange-200 transition-all duration-300 group hover:-translate-y-0.5 cursor-default flex items-center gap-3"
+                style={{ transitionDelay: `${index * 30}ms` }}
+              >
+                {/* Small Icon Box */}
+                <div className="shrink-0 w-8 h-8 rounded-lg bg-orange-50 text-orange-500 flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-colors duration-300">
+                  <BookOpen size={16} />
+                </div>
+
+                {/* Text */}
+                <span className="font-prompt text-sm md:text-base font-medium text-gray-700 group-hover:text-orange-700 transition-colors">
+                  {course}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Mobile Tag (โชว์เฉพาะมือถือ) */}
+          <div className="md:hidden mt-6 flex justify-center">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-orange-100/50 rounded-full text-orange-700 text-xs font-medium border border-orange-100">
+              <Star size={14} className="fill-orange-600 text-orange-600" />
+              <span>หลักสูตรได้รับการรับรอง</span>
             </div>
           </div>
         </div>
       </section>
 
       {/* --- CTA Section --- */}
-      <section className="py-24 bg-white relative">
+      <section className="py-16 bg-white relative">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-gradient-to-br from-orange-600 to-orange-500 rounded-[3rem] p-12 md:p-20 text-center relative overflow-hidden fade-in-section">
             {/* Decorative Circles */}
@@ -617,7 +678,6 @@ const App = () => {
           </div>
         </div>
       </section>
-
       {/* --- Footer --- */}
       <footer
         id="contact"
@@ -728,7 +788,7 @@ const App = () => {
                   <div className="w-4 h-4 mr-3 flex items-center justify-center text-orange-500">
                     @
                   </div>
-                  <span>education@kku.ac.th</span>
+                  <span>technosamoed66@gmail.com</span>
                 </li>
                 <li className="flex items-center">
                   <Calendar size={18} className="mr-3 text-orange-500" />
