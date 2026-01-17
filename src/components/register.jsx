@@ -12,14 +12,17 @@ import {
   GraduationCap,
   Loader2,
 } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
 
 const RegisterPage = () => {
+  const navigate = useNavigate(); // 1. แก้ไข: เพิ่มบรรทัดนี้
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
-    fullname: "",
+    firstname: "",
+    lastname: "",
     school: "",
     grade: "",
     phone: "",
@@ -97,7 +100,11 @@ const RegisterPage = () => {
 
     // Validate all required fields
     const newErrors = {};
-    if (!formData.fullname) newErrors.fullname = "กรุณากรอกชื่อ-นามสกุล";
+
+    // 2. แก้ไข: เปลี่ยนการเช็ค fullname เป็น firstname และ lastname
+    if (!formData.firstname) newErrors.firstname = "กรุณากรอกชื่อจริง";
+    if (!formData.lastname) newErrors.lastname = "กรุณากรอกนามสกุล";
+
     if (!formData.school) newErrors.school = "กรุณากรอกชื่อโรงเรียน";
     if (!formData.grade) newErrors.grade = "กรุณาระเลือกระดับชั้น";
     if (!formData.phone) newErrors.phone = "กรุณากรอกเบอร์โทรศัพท์";
@@ -115,28 +122,55 @@ const RegisterPage = () => {
 
     setIsSubmitting(true);
 
-    // Simulate API Call & Duplicate Check
-    setTimeout(() => {
-      // Mock Duplicate Check
-      if (formData.email === "test@kku.ac.th") {
-        setErrors((prev) => ({
-          ...prev,
-          email: "อีเมลนี้ถูกใช้งานแล้วในระบบ",
-        }));
-        setIsSubmitting(false);
-      } else if (formData.phone === "0812345678") {
-        setErrors((prev) => ({
-          ...prev,
-          phone: "เบอร์โทรศัพท์นี้ถูกใช้งานแล้ว",
-        }));
-        setIsSubmitting(false);
+    try {
+      // 1. ยิง API ไปที่ Laravel
+      const response = await fetch("http://127.0.0.1:8000/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        // 2. Mapping ตัวแปรให้ตรงกับ Database (Snake Case)
+        body: JSON.stringify({
+          first_name: formData.firstname,
+          last_name: formData.lastname,
+          email: formData.email,
+          phone: formData.phone,
+          school: formData.school,
+          grade_level: formData.grade, // ใน DB ชื่อ grade_level
+          password: formData.password,
+          password_confirmation: formData.confirmPassword,
+          is_term_accepted: formData.terms,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // 3. สมัครสำเร็จ -> เก็บ Token -> ไปหน้า Dashboard
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        alert("สมัครสมาชิกสำเร็จ!");
+        navigate("/userdashboard");
       } else {
-        // Success
-        setIsSubmitting(false);
-        alert("สมัครสมาชิกสำเร็จ! ยินดีต้อนรับสู่ครอบครัวศึกษาศาสตร์ มข.");
-        // In real app: navigate('/login');
+        // 4. ถ้า Error (เช่น อีเมลซ้ำ)
+        if (data.errors) {
+          const apiErrors = {};
+          if (data.errors.email) apiErrors.email = data.errors.email[0];
+          if (data.errors.phone) apiErrors.phone = data.errors.phone[0];
+          // เพิ่ม error field อื่นๆ ถ้ามี
+          setErrors(apiErrors);
+        } else {
+          alert(data.message || "เกิดข้อผิดพลาด");
+        }
       }
-    }, 2000);
+    } catch (error) {
+      console.error("Register Error:", error);
+      alert("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -491,12 +525,12 @@ const RegisterPage = () => {
               </div>
               <span className="text-sm text-gray-600 font-sarabun select-none group-hover:text-gray-800 transition-colors">
                 ข้าพเจ้ายอมรับ{" "}
-                <a
-                  href="#"
+                <Link
+                  to="#"
                   className="text-orange-600 underline decoration-orange-300 hover:decoration-orange-600"
                 >
                   เงื่อนไขและข้อตกลงการใช้งาน
-                </a>{" "}
+                </Link>{" "}
                 รวมถึงนโยบายความเป็นส่วนตัว
               </span>
             </label>
@@ -537,12 +571,12 @@ const RegisterPage = () => {
           <div className="text-center pt-2">
             <p className="text-gray-500 text-sm font-sarabun">
               มีบัญชีผู้ใช้แล้ว?{" "}
-              <a
-                href="#"
+              <Link
+                to="/login"
                 className="font-bold text-orange-600 hover:text-orange-700 transition-colors font-prompt"
               >
                 เข้าสู่ระบบ
-              </a>
+              </Link>
             </p>
           </div>
         </form>
