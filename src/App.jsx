@@ -303,15 +303,9 @@ const App = () => {
               <button className="w-full py-3 border border-orange-200 text-orange-600 font-bold rounded-xl bg-orange-50/50">
                 เข้าสู่ระบบ
               </button>
-              {/* <button className="w-full py-3 bg-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-200">
+              <button className="w-full py-3 bg-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-200">
                 สมัครเข้าร่วมกิจกรรม
-              </button> */}
-              <Link
-                to="/test"
-                className="w-full py-3 bg-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-200"
-              >
-                สมัครเข้าร่วมกิจกรรม
-              </Link>
+              </button>
             </div>
           </div>
         </div>
@@ -359,13 +353,19 @@ const App = () => {
               </p>
 
               <div className="hero-animate-up delay-300 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-                <button className="w-full sm:w-auto px-8 py-4 bg-orange-600 text-white rounded-full font-prompt font-semibold text-lg shadow-xl shadow-orange-200 btn-primary-hover flex items-center justify-center gap-2 group">
+                {/* <button className="w-full sm:w-auto px-8 py-4 bg-orange-600 text-white rounded-full font-prompt font-semibold text-lg shadow-xl shadow-orange-200 btn-primary-hover flex items-center justify-center gap-2 group">
                   สมัครเข้าร่วมกิจกรรม
                   <ArrowRight
                     size={20}
                     className="group-hover:translate-x-1 transition-transform"
                   />
-                </button>
+                </button> */}
+                <Link
+                  to="/userdashboard"
+                  className="w-full sm:w-auto px-8 py-4 bg-orange-600 text-white rounded-full font-prompt font-semibold text-lg shadow-xl shadow-orange-200 btn-primary-hover flex items-center justify-center gap-2 group"
+                >
+                  สมัครเข้าร่วมกิจกรรม
+                </Link>
                 <button className="w-full sm:w-auto px-8 py-4 bg-white text-gray-700 border border-gray-200 rounded-full font-prompt font-medium text-lg btn-secondary-hover">
                   เข้าสู่ระบบสมาชิก
                 </button>
