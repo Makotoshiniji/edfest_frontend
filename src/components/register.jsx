@@ -210,12 +210,12 @@ const RegisterPage = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Row 1: Name & School */}
+          {/* Row 1: First Name & Last Name */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Name */}
+            {/* First Name */}
             <div className="space-y-1">
               <label className="text-sm font-medium text-gray-700 font-prompt ml-1">
-                ชื่อ-นามสกุล <span className="text-red-500">*</span>
+                ชื่อจริง <span className="text-red-500">*</span>
               </label>
               <div className="input-wrapper relative transition-all duration-300">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 input-icon transition-colors">
@@ -223,25 +223,58 @@ const RegisterPage = () => {
                 </div>
                 <input
                   type="text"
-                  name="fullname"
-                  value={formData.fullname}
+                  name="firstname"
+                  value={formData.firstname}
                   onChange={handleChange}
                   className={`w-full pl-10 pr-4 py-2.5 bg-gray-50 border ${
-                    errors.fullname
+                    errors.firstname
                       ? "border-red-300 focus:ring-red-200"
                       : "border-gray-200 focus:ring-orange-200 focus:border-orange-500"
                   } rounded-xl focus:outline-none focus:ring-4 transition-all duration-300 font-sarabun`}
-                  placeholder="กรอกชื่อและนามสกุล"
+                  placeholder="กรอกชื่อจริง"
                 />
               </div>
-              {errors.fullname && (
+              {errors.firstname && (
                 <p className="text-xs text-red-500 flex items-center mt-1 error-msg">
                   <AlertCircle size={12} className="mr-1" />
-                  {errors.fullname}
+                  {errors.firstname}
                 </p>
               )}
             </div>
 
+            {/* Last Name */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700 font-prompt ml-1">
+                นามสกุล <span className="text-red-500">*</span>
+              </label>
+              <div className="input-wrapper relative transition-all duration-300">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 input-icon transition-colors">
+                  <User size={18} />
+                </div>
+                <input
+                  type="text"
+                  name="lastname"
+                  value={formData.lastname}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-4 py-2.5 bg-gray-50 border ${
+                    errors.lastname
+                      ? "border-red-300 focus:ring-red-200"
+                      : "border-gray-200 focus:ring-orange-200 focus:border-orange-500"
+                  } rounded-xl focus:outline-none focus:ring-4 transition-all duration-300 font-sarabun`}
+                  placeholder="กรอกนามสกุล"
+                />
+              </div>
+              {errors.lastname && (
+                <p className="text-xs text-red-500 flex items-center mt-1 error-msg">
+                  <AlertCircle size={12} className="mr-1" />
+                  {errors.lastname}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Row 2: School & Grade */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* School */}
             <div className="space-y-1">
               <label className="text-sm font-medium text-gray-700 font-prompt ml-1">
@@ -271,10 +304,7 @@ const RegisterPage = () => {
                 </p>
               )}
             </div>
-          </div>
 
-          {/* Row 2: Grade & Phone */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Grade Dropdown */}
             <div className="space-y-1">
               <label className="text-sm font-medium text-gray-700 font-prompt ml-1">
@@ -298,8 +328,6 @@ const RegisterPage = () => {
                   <option value="m4">มัธยมศึกษาปีที่ 4</option>
                   <option value="m5">มัธยมศึกษาปีที่ 5</option>
                   <option value="m6">มัธยมศึกษาปีที่ 6</option>
-                  {/* <option value="vocational">ปวช. / ปวส.</option>
-                  <option value="other">อื่นๆ</option> */}
                 </select>
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
                   <ChevronDown size={18} />
@@ -312,7 +340,10 @@ const RegisterPage = () => {
                 </p>
               )}
             </div>
+          </div>
 
+          {/* Row 3: Phone & Email */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Phone */}
             <div className="space-y-1">
               <label className="text-sm font-medium text-gray-700 font-prompt ml-1">
@@ -343,39 +374,39 @@ const RegisterPage = () => {
                 </p>
               )}
             </div>
-          </div>
 
-          {/* Email */}
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-gray-700 font-prompt ml-1">
-              อีเมล (Username) <span className="text-red-500">*</span>
-            </label>
-            <div className="input-wrapper relative transition-all duration-300">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 input-icon transition-colors">
-                <Mail size={18} />
+            {/* Email */}
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700 font-prompt ml-1">
+                อีเมล (Username) <span className="text-red-500">*</span>
+              </label>
+              <div className="input-wrapper relative transition-all duration-300">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 input-icon transition-colors">
+                  <Mail size={18} />
+                </div>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-4 py-2.5 bg-gray-50 border ${
+                    errors.email
+                      ? "border-red-300 focus:ring-red-200"
+                      : "border-gray-200 focus:ring-orange-200 focus:border-orange-500"
+                  } rounded-xl focus:outline-none focus:ring-4 transition-all duration-300 font-sarabun`}
+                  placeholder="example@email.com"
+                />
               </div>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className={`w-full pl-10 pr-4 py-2.5 bg-gray-50 border ${
-                  errors.email
-                    ? "border-red-300 focus:ring-red-200"
-                    : "border-gray-200 focus:ring-orange-200 focus:border-orange-500"
-                } rounded-xl focus:outline-none focus:ring-4 transition-all duration-300 font-sarabun`}
-                placeholder="example@email.com"
-              />
+              {errors.email && (
+                <p className="text-xs text-red-500 flex items-center mt-1 error-msg">
+                  <AlertCircle size={12} className="mr-1" />
+                  {errors.email}
+                </p>
+              )}
             </div>
-            {errors.email && (
-              <p className="text-xs text-red-500 flex items-center mt-1 error-msg">
-                <AlertCircle size={12} className="mr-1" />
-                {errors.email}
-              </p>
-            )}
           </div>
 
-          {/* Row 3: Passwords */}
+          {/* Row 4: Passwords */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Password */}
             <div className="space-y-1">
@@ -477,11 +508,11 @@ const RegisterPage = () => {
               type="submit"
               disabled={!formData.terms || isSubmitting}
               className={`w-full py-3.5 rounded-xl font-bold font-prompt text-lg shadow-lg flex items-center justify-center transition-all duration-300
-                ${
-                  !formData.terms || isSubmitting
-                    ? "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
-                    : "bg-orange-600 text-white hover:bg-orange-700 hover:shadow-orange-200 hover:-translate-y-1 hover:shadow-xl active:scale-95"
-                }`}
+              ${
+                !formData.terms || isSubmitting
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
+                  : "bg-orange-600 text-white hover:bg-orange-700 hover:shadow-orange-200 hover:-translate-y-1 hover:shadow-xl active:scale-95"
+              }`}
             >
               {isSubmitting ? (
                 <>

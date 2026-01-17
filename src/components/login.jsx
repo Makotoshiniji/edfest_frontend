@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom"; // 1. เพิ่ม Import
 import {
   GraduationCap,
   Mail,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 
 const LoginPage = () => {
+  const navigate = useNavigate(); // 2. ประกาศ navigate
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -19,31 +21,51 @@ const LoginPage = () => {
   const [error, setError] = useState("");
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Trigger animation on mount
   useEffect(() => {
     setIsLoaded(true);
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
     setIsLoading(true);
+    setError(""); // เคลียร์ Error เก่าก่อน
 
-    // Simulate API Call
-    setTimeout(() => {
-      setIsLoading(false);
-      if (email === "" || password === "") {
-        setError("กรุณากรอกอีเมลและรหัสผ่านให้ครบถ้วน");
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        // 3. แก้ไขตรงนี้: ส่งค่า email และ password จาก state
+        body: JSON.stringify({
+          email: email,
+          password: password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        // ไปหน้า Dashboard
+        navigate("/userdashboard");
       } else {
-        // Mock Success (In real app, redirect here)
-        alert("เข้าสู่ระบบสำเร็จ (Demo)");
+        // ใช้ setError เพื่อโชว์ข้อความแจ้งเตือนสวยๆ ด้านบนแทน alert
+        setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
       }
-    }, 1500);
+    } catch (error) {
+      console.error("Login Error:", error);
+      setError("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen relative flex items-center justify-center overflow-hidden bg-gray-50 font-sans text-gray-800">
-      {/* --- Styles & Fonts --- */}
       <style>
         {`
           @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600&display=swap');
@@ -51,20 +73,16 @@ const LoginPage = () => {
           body { font-family: 'Sarabun', sans-serif; }
           h1, h2, h3, h4, h5, h6, .font-prompt { font-family: 'Prompt', sans-serif; }
 
-          /* Background Animation */
           @keyframes blob {
             0% { transform: translate(0px, 0px) scale(1); }
             33% { transform: translate(30px, -50px) scale(1.1); }
             66% { transform: translate(-20px, 20px) scale(0.9); }
             100% { transform: translate(0px, 0px) scale(1); }
           }
-          .animate-blob {
-            animation: blob 10s infinite;
-          }
+          .animate-blob { animation: blob 10s infinite; }
           .animation-delay-2000 { animation-delay: 2s; }
           .animation-delay-4000 { animation-delay: 4s; }
 
-          /* Card Entry Animation */
           .card-enter {
             opacity: 0;
             transform: scale(0.95) translateY(20px);
@@ -75,11 +93,9 @@ const LoginPage = () => {
             transform: scale(1) translateY(0);
           }
 
-          /* Input Focus Transition */
           .input-group { transition: all 0.3s ease; }
           .input-group:focus-within { transform: translateY(-2px); }
           
-          /* Error Slide In */
           @keyframes slideDown {
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -93,8 +109,6 @@ const LoginPage = () => {
         <div className="absolute top-0 -left-4 w-72 h-72 bg-orange-200 rounded-full mix-blend-multiply filter blur-xl opacity-40 animate-blob"></div>
         <div className="absolute top-0 -right-4 w-72 h-72 bg-yellow-200 rounded-full mix-blend-multiply filter blur-xl opacity-40 animate-blob animation-delay-2000"></div>
         <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl opacity-40 animate-blob animation-delay-4000"></div>
-
-        {/* Subtle Grid Pattern */}
         <div
           className="absolute inset-0"
           style={{
@@ -108,13 +122,11 @@ const LoginPage = () => {
 
       {/* --- Main Card --- */}
       <div
-        className={`relative z-10 w-full max-w-md p-6 sm:p-8 card-enter ${
-          isLoaded ? "active" : ""
-        }`}
+        className={`relative z-10 w-full max-w-md p-6 sm:p-8 card-enter ${isLoaded ? "active" : ""}`}
       >
-        {/* Back Button (Optional UX improvement) */}
-        <a
-          href="#"
+        {/* 4.1 แก้ลิ้งค์กลับหน้าหลัก */}
+        <Link
+          to="/"
           className="inline-flex items-center text-gray-400 hover:text-orange-600 mb-6 transition-colors text-sm font-prompt group"
         >
           <ChevronLeft
@@ -122,13 +134,11 @@ const LoginPage = () => {
             className="mr-1 group-hover:-translate-x-1 transition-transform"
           />
           กลับหน้าหลัก
-        </a>
+        </Link>
 
         <div className="bg-white rounded-[2rem] shadow-2xl shadow-orange-100/50 border border-white p-8 sm:p-10 relative overflow-hidden">
-          {/* Top Decor Line */}
           <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-orange-400 to-orange-600"></div>
 
-          {/* Header Section */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-50 rounded-2xl text-orange-600 mb-4 shadow-sm transform hover:rotate-6 transition-transform duration-500 cursor-default">
               <GraduationCap size={32} />
@@ -141,7 +151,6 @@ const LoginPage = () => {
             </p>
           </div>
 
-          {/* Error Message */}
           {error && (
             <div className="mb-6 p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 text-red-600 text-sm animate-slide-down">
               <AlertCircle size={18} className="flex-shrink-0" />
@@ -149,12 +158,10 @@ const LoginPage = () => {
             </div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email Input */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 font-prompt ml-1">
-                อีเมล / เบอร์โทรศัพท์
+                อีเมล
               </label>
               <div className="input-group relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
@@ -170,7 +177,6 @@ const LoginPage = () => {
               </div>
             </div>
 
-            {/* Password Input */}
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <label className="text-sm font-medium text-gray-700 font-prompt ml-1">
@@ -197,17 +203,17 @@ const LoginPage = () => {
                 </button>
               </div>
               <div className="flex justify-end pt-1">
-                <a
-                  href="#"
+                {/* 4.2 แก้ลิ้งค์ลืมรหัสผ่าน */}
+                <Link
+                  to="/forgot_password"
                   className="text-sm text-orange-500 font-medium hover:text-orange-600 relative group font-prompt"
                 >
                   ลืมรหัสผ่าน?
                   <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-orange-600 transition-all duration-300 group-hover:w-full"></span>
-                </a>
+                </Link>
               </div>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={isLoading}
@@ -220,8 +226,6 @@ const LoginPage = () => {
               {isLoading ? (
                 <svg
                   className="animate-spin h-5 w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
                   viewBox="0 0 24 24"
                 >
                   <circle
@@ -250,23 +254,21 @@ const LoginPage = () => {
             </button>
           </form>
 
-          {/* Footer / Register Link */}
           <div className="mt-8 text-center">
             <p className="text-gray-500 text-sm font-sarabun">
-              ยังไม่มีบัญชีผู้ใช้?{" "}
-              <a
-                href="#"
+              ยังไม่มีบัญชีผู้ใช้? {/* 4.3 แก้ลิ้งค์สมัครสมาชิก */}
+              <Link
+                to="/register"
                 className="font-bold text-orange-600 hover:text-orange-700 transition-colors font-prompt"
               >
                 สมัครสมาชิกใหม่
-              </a>
+              </Link>
             </p>
           </div>
         </div>
 
-        {/* Footer Copyright */}
         <p className="text-center text-gray-400 text-xs mt-6 font-sarabun">
-          © 2024 Faculty of Education, KKU.
+          © 2026 Faculty of Education, KKU.
         </p>
       </div>
     </div>

@@ -10,7 +10,7 @@ import UserDashboard from "./components/UserDashboard.jsx";
 import Round_select from "./components/round_select.jsx";
 import ForgotPassword from "./components/forgot_password.jsx";
 import ResetPassword from "./components/reset_password.jsx";
-import EmailVerification from "./components/email_verification.jsx";
+import EmailVerification from "./components/verify_email.jsx";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
