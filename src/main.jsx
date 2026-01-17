@@ -36,8 +36,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/userdashboard" element={<UserDashboard />} />
         <Route path="/round_select" element={<Round_select />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
-        <Route path="/verify-email/:token" element={<EmailVerification />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/verify-email" element={<EmailVerification />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>
