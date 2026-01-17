@@ -1,17 +1,7 @@
-// import { StrictMode } from 'react'
-// import { createRoot } from 'react-dom/client'
-// import './index.css'
-// import App from './App.jsx'
-
-// createRoot(document.getElementById('root')).render(
-//   <StrictMode>
-//     <App />
-//   </StrictMode>,
-// )
 // src/main.jsx
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route } from "react-router-dom"; // import เพิ่ม
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import App from "./App.jsx";
 import "./index.css";
 import Register from "./components/register.jsx";
@@ -26,19 +16,19 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
       <Routes>
-        {/* เส้นทางหลัก (หน้าแรก) โชว์ App */}
         <Route path="/" element={<App />} />
-
-        {/* เส้นทางสมัครสมาชิก โชว์ Register */}
         <Route path="/register" element={<Register />} />
-        {/* เส้นทางเข้าสู่ระบบ โชว์ login */}
         <Route path="/login" element={<Login />} />
         <Route path="/userdashboard" element={<UserDashboard />} />
         <Route path="/round_select" element={<Round_select />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/verify-email" element={<EmailVerification />} />
+
+        {/* หน้าลืมรหัสผ่าน (เข้าได้เลย) */}
+        <Route path="/forgot_password" element={<ForgotPassword />} />
+
+        {/* --- แก้ไข 2 บรรทัดนี้ (ลบ /:token ออก) --- */}
+        <Route path="/reset_password" element={<ResetPassword />} />
+        <Route path="/verify_email" element={<EmailVerification />} />
       </Routes>
     </BrowserRouter>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

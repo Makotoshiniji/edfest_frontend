@@ -50,7 +50,7 @@ const App = () => {
       }, observerOptions);
 
       const elements = document.querySelectorAll(
-        ".fade-in-section, .slide-in-left, .slide-in-right, .scale-up"
+        ".fade-in-section, .slide-in-left, .slide-in-right, .scale-up",
       );
       elements.forEach((el) => observer.observe(el));
 
@@ -238,24 +238,18 @@ const App = () => {
                       <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-orange-500 transition-all duration-300 group-hover:w-full opacity-0 group-hover:opacity-100"></span>
                     </button>
                   );
-                }
+                },
               )}
 
               <div className="h-6 w-px bg-gray-200 mx-2"></div>
 
               <div className="flex items-center space-x-3">
-                {/* <button className="font-prompt text-sm font-medium px-5 py-2 rounded-full border border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-600 transition-all duration-300 btn-secondary-hover bg-white">
-                  เข้าสู่ระบบ
-                </button> */}
                 <Link
                   to="/login"
                   className="font-prompt text-sm font-medium px-5 py-2 rounded-full border border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-600 transition-all duration-300 btn-secondary-hover bg-white"
                 >
                   เข้าสู่ระบบ
                 </Link>
-                {/* <button className="font-prompt text-sm font-medium px-5 py-2 rounded-full bg-orange-600 text-white shadow-md shadow-orange-100 btn-primary-hover">
-                  สมัครเข้าร่วม
-                </button> */}
                 <Link
                   to="/register"
                   className="font-prompt text-sm font-medium px-5 py-2 rounded-full bg-orange-600 text-white shadow-md shadow-orange-100 btn-primary-hover inline-flex items-center justify-center"
@@ -290,22 +284,35 @@ const App = () => {
                   key={index}
                   onClick={() =>
                     scrollToSection(
-                      ["home", "about", "course", "contact"][index]
+                      ["home", "about", "course", "contact"][index],
                     )
                   }
                   className="block w-full text-left font-prompt text-lg font-medium text-gray-600 hover:text-orange-600 py-2 border-b border-gray-50"
                 >
                   {item}
                 </button>
-              )
+              ),
             )}
             <div className="pt-6 flex flex-col gap-3">
-              <button className="w-full py-3 border border-orange-200 text-orange-600 font-bold rounded-xl bg-orange-50/50">
+              {/* <button className="w-full py-3 border border-orange-200 text-orange-600 font-bold rounded-xl bg-orange-50/50">
                 เข้าสู่ระบบ
-              </button>
-              <button className="w-full py-3 bg-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-200">
+              </button> */}
+              <Link
+                to="/login"
+                className="w-full py-3 border border-orange-200 text-orange-600 font-bold rounded-xl bg-orange-50/50"
+              >
+                เข้าสู่ระบบ
+              </Link>
+              <Link
+                to="/register"
+                className="w-full py-3 bg-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-200"
+              >
                 สมัครเข้าร่วมกิจกรรม
-              </button>
+              </Link>
+
+              {/* <button className="w-full py-3 bg-orange-600 text-white font-bold rounded-xl shadow-lg shadow-orange-200">
+                สมัครเข้าร่วมกิจกรรม
+              </button> */}
             </div>
           </div>
         </div>
@@ -361,14 +368,20 @@ const App = () => {
                   />
                 </button> */}
                 <Link
-                  to="/userdashboard"
+                  to="/register"
                   className="w-full sm:w-auto px-8 py-4 bg-orange-600 text-white rounded-full font-prompt font-semibold text-lg shadow-xl shadow-orange-200 btn-primary-hover flex items-center justify-center gap-2 group"
                 >
                   สมัครเข้าร่วมกิจกรรม
                 </Link>
-                <button className="w-full sm:w-auto px-8 py-4 bg-white text-gray-700 border border-gray-200 rounded-full font-prompt font-medium text-lg btn-secondary-hover">
+                <Link
+                  to="/login"
+                  className="w-full sm:w-auto px-8 py-4 bg-white text-gray-700 border border-gray-200 rounded-full font-prompt font-medium text-lg btn-secondary-hover"
+                >
                   เข้าสู่ระบบสมาชิก
-                </button>
+                </Link>
+                {/* <button className="w-full sm:w-auto px-8 py-4 bg-white text-gray-700 border border-gray-200 rounded-full font-prompt font-medium text-lg btn-secondary-hover">
+                  เข้าสู่ระบบสมาชิก
+                </button> */}
               </div>
 
               {/* Trust Indicators */}
