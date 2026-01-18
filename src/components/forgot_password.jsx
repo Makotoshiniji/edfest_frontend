@@ -80,7 +80,7 @@ const ForgotPassword = () => {
 
         // 3. รอ 1.5 วินาที ให้ user เห็นข้อความสำเร็จ แล้วพาไปหน้า verify-email
         setTimeout(() => {
-          navigate("/verify_email", { state: { email } });
+          navigate("/verify_opt_resetpassword", { state: { email } });
         }, 1500);
       } else {
         // กรณี Error (เช่น ไม่พบอีเมล)

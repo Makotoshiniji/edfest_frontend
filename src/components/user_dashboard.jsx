@@ -342,6 +342,12 @@ const UserDashboard = () => {
                     >
                       <Edit3 size={18} />
                     </button>
+                    {/* <button
+                      onClick={() => navigate("/edit_profile")}
+                      className="text-gray-400 hover:text-blue-600"
+                    >
+                      <Edit3 size={18} />
+                    </button> */}
                   </div>
                   <h3 className="text-gray-500 text-sm font-light mb-1">
                     ข้อมูลส่วนตัว
@@ -553,7 +559,7 @@ const UserDashboard = () => {
                     </div>
                     <div className="mt-8 flex justify-center sm:justify-start">
                       <button
-                        onClick={handleEditProfile}
+                        onClick={() => navigate("/edit_profile")}
                         className="flex items-center px-6 py-2.5 bg-gray-800 text-white rounded-xl shadow-lg hover:bg-gray-900 transition-colors"
                       >
                         <Edit3 size={16} className="mr-2" /> แก้ไขข้อมูล
