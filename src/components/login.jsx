@@ -51,7 +51,7 @@ const LoginPage = () => {
         localStorage.setItem("user", JSON.stringify(data.user));
 
         // ไปหน้า Dashboard
-        navigate("/userdashboard");
+        navigate("/user_dashboard");
       } else {
         // ใช้ setError เพื่อโชว์ข้อความแจ้งเตือนสวยๆ ด้านบนแทน alert
         setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");

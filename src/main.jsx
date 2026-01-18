@@ -19,7 +19,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route path="/" element={<App />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/userdashboard" element={<UserDashboard />} />
+        <Route path="/user_dashboard" element={<UserDashboard />} />
         <Route path="/round_select" element={<Round_select />} />
 
         {/* หน้าลืมรหัสผ่าน (เข้าได้เลย) */}
