@@ -18,54 +18,68 @@ import {
   BookOpen,
   GraduationCap,
 } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
 
 const UserDashboard = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showToast, setShowToast] = useState(false);
 
-  // Mock User Data
-  const user = {
-    fullname: "นายรักเรียน เพียรศึกษา",
-    school: "โรงเรียนขอนแก่นวิทยายน",
-    grade: "มัธยมศึกษาปีที่ 6",
-    phone: "081-234-5678",
-    email: "student@kkmail.com",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix",
-  };
+  // State สำหรับข้อมูลจริง
+  const [user, setUser] = useState(null);
+  const [selectedActivities, setSelectedActivities] = useState([]);
 
-  // Mock Selected Activities Data
-  const selectedActivities = [
-    {
-      id: 1,
-      round: 1,
-      time: "09.30 – 10.00",
-      major: "การสอนภาษาไทย",
-      room: "ED-101",
-    },
-    {
-      id: 2,
-      round: 3,
-      time: "10.50 – 11.20",
-      major: "คอมพิวเตอร์ศึกษา",
-      room: "ED-Lab1",
-    },
-  ];
-
-  const totalRounds = 4;
+  const totalRounds = 4; // จำนวนรอบสูงสุดที่ให้เลือก
   const currentSelection = selectedActivities.length;
-  const isComplete = currentSelection === totalRounds;
+  const isComplete = currentSelection >= totalRounds;
 
-  // Initial Animation
   useEffect(() => {
-    setTimeout(() => setIsLoading(false), 800);
-  }, []);
+    // 1. ตรวจสอบ Token และข้อมูล User
+    const token = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
+
+    if (!token || !storedUser) {
+      navigate("/login");
+      return;
+    }
+
+    setUser(JSON.parse(storedUser));
+
+    // 2. ดึงข้อมูลกิจกรรมที่ลงทะเบียนไว้
+    const fetchRegistrations = async () => {
+      try {
+        const response = await fetch(
+          "http://127.0.0.1:8000/api/my-registrations",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
+          },
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setSelectedActivities(data);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRegistrations();
+  }, [navigate]);
 
   // Helpers
   const handleLogout = () => {
     if (window.confirm("คุณต้องการออกจากระบบใช่หรือไม่?")) {
-      alert("ออกจากระบบเรียบร้อย");
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      navigate("/login");
     }
   };
 
@@ -110,6 +124,51 @@ const UserDashboard = () => {
     );
   }
 
+  // ฟังก์ชันสำหรับลบการจอง
+  const handleRemove = async (roundId) => {
+    if (!window.confirm("คุณต้องการยกเลิกการจองรอบนี้ใช่หรือไม่?")) return;
+
+    const token = localStorage.getItem("token");
+    try {
+      // 1. ส่งคำสั่งลบไปที่ Backend (ต้องมี API รองรับ หรือใช้ Sync แบบส่งค่าว่าง)
+      // แต่วิธีที่ง่ายที่สุดสำหรับระบบ Sync คือการส่งข้อมูลชุดเดิม "โดยตัดตัวที่จะลบออก"
+
+      // กรองเอาเฉพาะตัวที่ *ไม่ได้* ถูกลบ
+      const updatedList = selectedActivities.filter(
+        (activity) => activity.round_id !== roundId,
+      );
+
+      // แปลงข้อมูลเพื่อส่งกลับไป Sync ใหม่
+      const payload = updatedList.map((item) => ({
+        round_id: item.round_id,
+        station_id: item.station_id,
+      }));
+
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/registrations/sync",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ registrations: payload }),
+        },
+      );
+
+      if (response.ok) {
+        // 2. ถ้าสำเร็จ ให้อัปเดตหน้าจอทันที (ไม่ต้องโหลดใหม่)
+        setSelectedActivities(updatedList);
+        setShowToast(true); // แจ้งเตือนว่าลบแล้ว (ถ้ามี state toast)
+      } else {
+        alert("เกิดข้อผิดพลาดในการลบข้อมูล");
+      }
+    } catch (error) {
+      console.error("Remove Error:", error);
+      alert("ไม่สามารถเชื่อมต่อ Server ได้");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 font-sans flex">
       {/* --- Styles --- */}
@@ -130,7 +189,7 @@ const UserDashboard = () => {
         `}
       </style>
 
-      {/* --- Sidebar (Desktop) --- */}
+      {/* --- Sidebar --- */}
       <aside className="hidden lg:flex flex-col w-72 bg-white border-r border-gray-100 fixed h-full z-20 shadow-sm">
         <div className="p-8 flex items-center space-x-3">
           <div className="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-orange-200">
@@ -176,7 +235,7 @@ const UserDashboard = () => {
         </div>
       </aside>
 
-      {/* --- Mobile Header & Overlay --- */}
+      {/* --- Mobile Header --- */}
       <div className="lg:hidden fixed top-0 w-full bg-white z-30 px-4 py-3 shadow-sm flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 bg-orange-600 rounded-md flex items-center justify-center text-white">
@@ -248,7 +307,10 @@ const UserDashboard = () => {
               <div>
                 <h2 className="font-prompt text-3xl font-bold text-gray-800 mb-2">
                   สวัสดี,{" "}
-                  <span className="text-orange-600">{user.fullname}</span> 👋
+                  <span className="text-orange-600">
+                    {user?.first_name} {user?.last_name}
+                  </span>{" "}
+                  👋
                 </h2>
                 <p className="text-gray-500 font-light">
                   ยินดีต้อนรับสู่ระบบจัดการกิจกรรม Open House
@@ -267,7 +329,6 @@ const UserDashboard = () => {
           {/* === OVERVIEW TAB === */}
           {activeTab === "overview" && (
             <div className="space-y-6">
-              {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-up delay-100">
                 {/* Profile Summary Card */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 card-hover transition-all duration-300">
@@ -286,9 +347,9 @@ const UserDashboard = () => {
                     ข้อมูลส่วนตัว
                   </h3>
                   <p className="font-prompt font-semibold text-gray-800 truncate">
-                    {user.school}
+                    {user?.school}
                   </p>
-                  <p className="text-xs text-gray-400 mt-1">{user.grade}</p>
+                  <p className="text-xs text-gray-400 mt-1">{user?.grade}</p>
                 </div>
 
                 {/* Selection Status Card */}
@@ -315,8 +376,6 @@ const UserDashboard = () => {
                       / {totalRounds} รอบ
                     </span>
                   </div>
-
-                  {/* Progress Bar */}
                   <div className="w-full bg-black/10 h-1.5 rounded-full mt-4 overflow-hidden">
                     <div
                       className="h-full bg-white transition-all duration-1000"
@@ -340,12 +399,12 @@ const UserDashboard = () => {
                       {currentSelection === 0
                         ? "คุณยังไม่ได้เลือกกิจกรรม"
                         : isComplete
-                        ? "เลือกครบตามจำนวนแล้ว"
-                        : "ยังสามารถเลือกเพิ่มได้อีก"}
+                          ? "เลือกครบตามจำนวนแล้ว"
+                          : "ยังสามารถเลือกเพิ่มได้อีก"}
                     </p>
                   </div>
                   <button
-                    onClick={() => setActiveTab("activities")}
+                    onClick={() => navigate("/round_select")}
                     className="mt-4 w-full py-2 bg-gray-50 text-gray-600 hover:bg-orange-50 hover:text-orange-600 rounded-lg text-sm font-medium transition-colors flex items-center justify-center"
                   >
                     {currentSelection === 0
@@ -360,7 +419,7 @@ const UserDashboard = () => {
               <div className="bg-white rounded-3xl p-6 lg:p-8 shadow-sm border border-gray-100 animate-fade-up delay-200">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="font-prompt text-xl font-bold text-gray-800 flex items-center">
-                    <BookOpen size={20} className="mr-2 text-orange-500" />
+                    <BookOpen size={20} className="mr-2 text-orange-500" />{" "}
                     สรุปกิจกรรมที่เลือก
                   </h3>
                   <button
@@ -373,7 +432,7 @@ const UserDashboard = () => {
 
                 {currentSelection > 0 ? (
                   <div className="space-y-3">
-                    {selectedActivities.map((activity) => (
+                    {selectedActivities.map((activity, index) => (
                       <div
                         key={activity.id}
                         className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-gray-50 border border-gray-100 hover:border-orange-200 transition-colors"
@@ -382,19 +441,20 @@ const UserDashboard = () => {
                           <div className="bg-white w-12 h-12 rounded-lg flex flex-col items-center justify-center text-xs font-bold text-gray-500 shadow-sm border border-gray-100">
                             <span>รอบ</span>
                             <span className="text-lg text-orange-600 leading-none">
-                              {activity.round}
+                              {index + 1}
                             </span>
                           </div>
                           <div>
                             <h4 className="font-prompt font-medium text-gray-800">
-                              {activity.major}
+                              {activity.station?.name}
                             </h4>
                             <div className="flex items-center text-xs text-gray-500 mt-0.5">
                               <Clock size={12} className="mr-1" />{" "}
-                              {activity.time}
+                              {activity.round?.start_time} -{" "}
+                              {activity.round?.end_time}
                               <span className="mx-2">•</span>
                               <MapPin size={12} className="mr-1" /> ห้อง{" "}
-                              {activity.room}
+                              {activity.station?.room}
                             </div>
                           </div>
                         </div>
@@ -419,7 +479,7 @@ const UserDashboard = () => {
                       กรุณาเลือกรอบกิจกรรมเพื่อเริ่มต้น
                     </p>
                     <button
-                      onClick={() => setActiveTab("activities")}
+                      onClick={() => navigate("/round_select")}
                       className="px-6 py-2 bg-orange-600 text-white rounded-lg shadow-md hover:bg-orange-700 transition-colors text-sm"
                     >
                       ไปยังหน้าเลือกกิจกรรม
@@ -435,24 +495,21 @@ const UserDashboard = () => {
             <div className="animate-fade-up">
               <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 max-w-3xl mx-auto relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-orange-400 to-orange-600"></div>
-
                 <div className="relative flex flex-col items-center sm:items-start sm:flex-row sm:space-x-8">
                   <div className="mt-12 sm:mt-8 mb-4 sm:mb-0">
                     <div className="w-32 h-32 bg-white p-1 rounded-full shadow-lg">
                       <img
-                        src={user.avatar}
+                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.first_name}`}
                         alt="Profile"
                         className="w-full h-full rounded-full bg-gray-100"
                       />
                     </div>
                   </div>
-
                   <div className="mt-0 sm:mt-14 text-center sm:text-left flex-1">
                     <h2 className="font-prompt text-2xl font-bold text-gray-800">
-                      {user.fullname}
+                      {user?.first_name} {user?.last_name}
                     </h2>
                     <p className="text-gray-500">นักเรียนผู้เข้าร่วมโครงการ</p>
-
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
                       <div className="space-y-1">
                         <label className="text-xs text-gray-400 uppercase tracking-wide">
@@ -460,7 +517,7 @@ const UserDashboard = () => {
                         </label>
                         <div className="flex items-center text-gray-700 bg-gray-50 p-3 rounded-lg">
                           <School size={18} className="mr-3 text-orange-500" />
-                          {user.school}
+                          {user?.school}
                         </div>
                       </div>
                       <div className="space-y-1">
@@ -472,7 +529,7 @@ const UserDashboard = () => {
                             size={18}
                             className="mr-3 text-orange-500"
                           />
-                          {user.grade}
+                          {user?.grade_level}
                         </div>
                       </div>
                       <div className="space-y-1">
@@ -481,7 +538,7 @@ const UserDashboard = () => {
                         </label>
                         <div className="flex items-center text-gray-700 bg-gray-50 p-3 rounded-lg">
                           <Phone size={18} className="mr-3 text-orange-500" />
-                          {user.phone}
+                          {user?.phone}
                         </div>
                       </div>
                       <div className="space-y-1">
@@ -490,18 +547,16 @@ const UserDashboard = () => {
                         </label>
                         <div className="flex items-center text-gray-700 bg-gray-50 p-3 rounded-lg">
                           <Mail size={18} className="mr-3 text-orange-500" />
-                          {user.email}
+                          {user?.email}
                         </div>
                       </div>
                     </div>
-
                     <div className="mt-8 flex justify-center sm:justify-start">
                       <button
                         onClick={handleEditProfile}
                         className="flex items-center px-6 py-2.5 bg-gray-800 text-white rounded-xl shadow-lg hover:bg-gray-900 transition-colors"
                       >
-                        <Edit3 size={16} className="mr-2" />
-                        แก้ไขข้อมูล
+                        <Edit3 size={16} className="mr-2" /> แก้ไขข้อมูล
                       </button>
                     </div>
                   </div>
@@ -525,9 +580,7 @@ const UserDashboard = () => {
                 <div className="mt-4 md:mt-0 flex items-center bg-orange-50 px-4 py-2 rounded-xl border border-orange-100">
                   <span className="text-gray-600 text-sm mr-2">สถานะ:</span>
                   <span
-                    className={`font-bold ${
-                      isComplete ? "text-green-600" : "text-orange-600"
-                    }`}
+                    className={`font-bold ${isComplete ? "text-green-600" : "text-orange-600"}`}
                   >
                     เลือกแล้ว {currentSelection} / {totalRounds}
                   </span>
@@ -548,37 +601,38 @@ const UserDashboard = () => {
                             รอบที่
                           </span>
                           <span className="text-2xl font-bold">
-                            {activity.round}
+                            {index + 1}
                           </span>
                         </div>
                         <div>
                           <div className="flex items-center space-x-2 mb-1">
                             <span className="md:hidden bg-orange-100 text-orange-700 text-xs px-2 py-0.5 rounded font-bold">
-                              รอบที่ {activity.round}
+                              รอบที่ {index + 1}
                             </span>
                             <span className="bg-gray-100 text-gray-500 text-xs px-2 py-0.5 rounded flex items-center">
                               <Clock size={10} className="mr-1" />{" "}
-                              {activity.time}
+                              {activity.round?.start_time} -{" "}
+                              {activity.round?.end_time}
                             </span>
                           </div>
                           <h4 className="font-prompt text-lg font-bold text-gray-800">
-                            {activity.major}
+                            {activity.station?.name}
                           </h4>
                           <p className="text-gray-500 text-sm mt-1 flex items-center">
-                            <MapPin size={14} className="mr-1 text-gray-400" />
-                            อาคารคณะศึกษาศาสตร์ ห้อง {activity.room}
+                            <MapPin size={14} className="mr-1 text-gray-400" />{" "}
+                            อาคารคณะศึกษาศาสตร์ ห้อง {activity.station?.room}
                           </p>
                         </div>
                       </div>
-
                       <div className="mt-4 md:mt-0 flex items-center justify-between md:justify-end md:space-x-4 pt-4 md:pt-0 border-t md:border-t-0 border-gray-100">
                         <div className="flex items-center text-green-600 text-sm font-medium">
-                          <CheckCircle size={16} className="mr-1.5" />
+                          <CheckCircle size={16} className="mr-1.5" />{" "}
                           ลงทะเบียนสำเร็จ
                         </div>
                         <button
                           className="text-gray-400 hover:text-red-500 p-2 transition-colors"
                           title="ยกเลิกการเลือก"
+                          onClick={() => handleRemove(activity.round_id)}
                         >
                           <X size={20} />
                         </button>
@@ -587,7 +641,10 @@ const UserDashboard = () => {
                   ))}
 
                   {!isComplete && (
-                    <button className="w-full py-4 border-2 border-dashed border-orange-200 rounded-2xl text-orange-500 font-medium hover:bg-orange-50 hover:border-orange-400 transition-all duration-300 flex items-center justify-center space-x-2">
+                    <button
+                      onClick={() => navigate("/round_select")}
+                      className="w-full py-4 border-2 border-dashed border-orange-200 rounded-2xl text-orange-500 font-medium hover:bg-orange-50 hover:border-orange-400 transition-all duration-300 flex items-center justify-center space-x-2"
+                    >
                       <div className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold">
                         +
                       </div>
@@ -607,7 +664,10 @@ const UserDashboard = () => {
                     คุณยังไม่ได้ทำการเลือกรอบกิจกรรม
                     กรุณาเลือกกิจกรรมที่คุณสนใจเพื่อเข้าร่วมงาน Open House
                   </p>
-                  <button className="px-8 py-3 bg-orange-600 text-white rounded-xl font-bold shadow-lg shadow-orange-200 hover:bg-orange-700 hover:-translate-y-1 transition-all duration-300">
+                  <button
+                    onClick={() => navigate("/round_select")}
+                    className="px-8 py-3 bg-orange-600 text-white rounded-xl font-bold shadow-lg shadow-orange-200 hover:bg-orange-700 hover:-translate-y-1 transition-all duration-300"
+                  >
                     ไปหน้าเลือกกิจกรรม
                   </button>
                 </div>
