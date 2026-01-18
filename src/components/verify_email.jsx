@@ -8,8 +8,13 @@ import {
   RotateCcw,
   Loader2,
 } from "lucide-react";
+import { useLocation, useNavigate, Link } from "react-router-dom"; // Import เพิ่ม
 
 const OtpVerification = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const email = location.state?.email || ""; // รับ email มาจากหน้าก่อน
+
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -20,10 +25,13 @@ const OtpVerification = () => {
 
   const inputRefs = useRef([]);
 
-  // Trigger Entrance Animation
+  // ถ้าไม่มี email (เช่นเข้าผ่าน URL ตรงๆ) ให้ดีดกลับไปหน้า Forgot
   useEffect(() => {
+    if (!email) {
+      navigate("/forgot-password");
+    }
     setIsLoaded(true);
-  }, []);
+  }, [email, navigate]);
 
   // Countdown Timer
   useEffect(() => {
@@ -36,15 +44,13 @@ const OtpVerification = () => {
 
   // Handle Input Change
   const handleChange = (index, value) => {
-    // Allow only numbers
     if (isNaN(value)) return;
 
     const newOtp = [...otp];
-    newOtp[index] = value.substring(value.length - 1); // Take last char
+    newOtp[index] = value.substring(value.length - 1);
     setOtp(newOtp);
-    setError(""); // Clear error on type
+    setError("");
 
-    // Move to next input if value is entered
     if (value && index < 5 && inputRefs.current[index + 1]) {
       inputRefs.current[index + 1].focus();
     }
@@ -66,7 +72,7 @@ const OtpVerification = () => {
   const handlePaste = (e) => {
     e.preventDefault();
     const data = e.clipboardData.getData("text").trim();
-    if (!/^\d+$/.test(data)) return; // Only numbers
+    if (!/^\d+$/.test(data)) return;
 
     const newOtp = [...otp];
     const pasteData = data.slice(0, 6).split("");
@@ -78,23 +84,41 @@ const OtpVerification = () => {
     setOtp(newOtp);
     setError("");
 
-    // Focus appropriate input
     const nextIndex = Math.min(pasteData.length, 5);
     inputRefs.current[nextIndex].focus();
   };
 
-  // Handle Resend
-  const handleResend = () => {
+  // Handle Resend (ต้องยิง API ขอใหม่)
+  const handleResend = async () => {
     if (countdown > 0) return;
-    setCountdown(60);
-    setOtp(["", "", "", "", "", ""]);
-    setError("");
-    inputRefs.current[0].focus();
-    // Simulate API call for resend here
+
+    // ยิง API ขอ OTP ใหม่ (เหมือนหน้า Forgot Password)
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/forgot-password",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        },
+      );
+
+      if (response.ok) {
+        setCountdown(60);
+        setOtp(["", "", "", "", "", ""]);
+        setError("");
+        inputRefs.current[0].focus();
+        alert("ส่งรหัส OTP ใหม่เรียบร้อยแล้ว");
+      } else {
+        alert("ไม่สามารถส่งรหัส OTP ได้ กรุณาลองใหม่");
+      }
+    } catch (error) {
+      alert("เชื่อมต่อ Server ไม่ได้");
+    }
   };
 
-  // Submit Logic
-  const handleSubmit = (e) => {
+  // Submit Logic (Verify OTP)
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const otpValue = otp.join("");
 
@@ -103,33 +127,48 @@ const OtpVerification = () => {
     setIsLoading(true);
     setError("");
 
-    // Simulate API Validation
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      // ยิง API ตรวจสอบ OTP
+      const response = await fetch("http://127.0.0.1:8000/api/verify-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ email, otp: otpValue }),
+      });
 
-      // Mock Validation: "123456" is correct
-      if (otpValue === "123456") {
+      const data = await response.json();
+
+      if (response.ok) {
         setIsSuccess(true);
+        // รอแป๊บนึง แล้วพาไปหน้า Reset Password พร้อมแนบ OTP ไปด้วย
+        setTimeout(() => {
+          navigate("/reset_password", { state: { email, otp: otpValue } });
+        }, 1000);
       } else {
-        setError("รหัส OTP ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง");
+        // OTP ผิด
+        setError(data.message || "รหัส OTP ไม่ถูกต้อง");
         setIsShake(true);
-        setTimeout(() => setIsShake(false), 500); // Reset shake state
-        setOtp(["", "", "", "", "", ""]); // Clear inputs
+        setTimeout(() => setIsShake(false), 500);
+        setOtp(["", "", "", "", "", ""]);
         inputRefs.current[0].focus();
       }
-    }, 1500);
+    } catch (err) {
+      setError("เชื่อมต่อ Server ไม่ได้");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 relative overflow-hidden font-sans text-gray-800">
-      {/* --- Styles --- */}
       <style>
         {`
           @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600&display=swap');
           body { font-family: 'Sarabun', sans-serif; }
           h1, h2, h3, h4, h5, h6, .font-prompt { font-family: 'Prompt', sans-serif; }
 
-          /* Entrance Animation */
           .card-enter {
             opacity: 0;
             transform: translateY(30px);
@@ -140,7 +179,6 @@ const OtpVerification = () => {
             transform: translateY(0);
           }
 
-          /* Shake Animation for Error */
           @keyframes shake {
             0%, 100% { transform: translateX(0); }
             10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
@@ -148,7 +186,6 @@ const OtpVerification = () => {
           }
           .animate-shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
 
-          /* Success Pulse */
           @keyframes pulse-orange {
             0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.4); }
             70% { box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); }
@@ -165,17 +202,14 @@ const OtpVerification = () => {
         <div className="absolute bottom-[-50px] left-[-50px] w-64 h-64 bg-yellow-200 rounded-full blur-[80px] opacity-40 animate-pulse"></div>
       </div>
 
-      {/* --- Main Card --- */}
       <div
         className={`relative z-10 w-full max-w-md px-4 card-enter ${
           isLoaded ? "active" : ""
         }`}
       >
         <div className="bg-white rounded-[2rem] shadow-2xl shadow-orange-100/50 border border-white p-8 md:p-10 text-center relative overflow-hidden">
-          {/* Top Decorative Line */}
           <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-orange-300 to-orange-500"></div>
 
-          {/* Icon */}
           <div className="flex justify-center mb-6">
             <div
               className={`w-20 h-20 rounded-full flex items-center justify-center mb-2 transition-all duration-500 
@@ -197,12 +231,10 @@ const OtpVerification = () => {
             ยืนยันรหัส OTP
           </h1>
           <p className="text-gray-500 font-light text-sm md:text-base mb-8">
-            กรุณากรอกรหัส OTP 6 หลัก
-            <br />
-            ที่ส่งไปยังอีเมลของคุณ
+            กรุณากรอกรหัส OTP 6 หลัก <br />
+            ที่ส่งไปยัง: <b>{email}</b>
           </p>
 
-          {/* Error Message */}
           {error && (
             <div className="mb-6 p-3 bg-red-50 border border-red-100 rounded-xl flex items-center justify-center text-red-600 text-sm animate-shake">
               <AlertCircle size={18} className="mr-2" />
@@ -210,7 +242,6 @@ const OtpVerification = () => {
             </div>
           )}
 
-          {/* OTP Inputs */}
           <form onSubmit={handleSubmit}>
             <div
               className={`flex justify-center gap-2 sm:gap-3 mb-8 ${
@@ -233,14 +264,13 @@ const OtpVerification = () => {
                       isSuccess
                         ? "border-green-400 bg-green-50 text-green-700"
                         : error
-                        ? "border-red-300 bg-red-50 text-red-600 focus:border-red-500"
-                        : "border-gray-200 bg-gray-50 text-gray-800 focus:border-orange-500 focus:bg-white focus:shadow-[0_0_0_4px_rgba(249,115,22,0.15)]"
+                          ? "border-red-300 bg-red-50 text-red-600 focus:border-red-500"
+                          : "border-gray-200 bg-gray-50 text-gray-800 focus:border-orange-500 focus:bg-white focus:shadow-[0_0_0_4px_rgba(249,115,22,0.15)]"
                     }`}
                 />
               ))}
             </div>
 
-            {/* Verify Button */}
             <button
               type="submit"
               disabled={isLoading || otp.join("").length !== 6 || isSuccess}
@@ -264,7 +294,6 @@ const OtpVerification = () => {
             </button>
           </form>
 
-          {/* Resend Logic */}
           <div className="mt-8 text-center">
             <p className="text-gray-500 text-sm mb-2">ยังไม่ได้รับรหัส?</p>
             {countdown > 0 ? (
@@ -290,7 +319,6 @@ const OtpVerification = () => {
             )}
           </div>
 
-          {/* Footer & Security Note */}
           <div className="mt-8 pt-6 border-t border-gray-100">
             <div className="flex flex-col items-center space-y-4">
               <p className="text-xs text-gray-400 bg-orange-50/50 px-3 py-1 rounded-full border border-orange-100">
@@ -298,13 +326,13 @@ const OtpVerification = () => {
                 รหัส OTP จะหมดอายุภายใน 5 นาที
               </p>
 
-              <a
-                href="#"
+              <Link
+                to="/login"
                 className="flex items-center text-gray-400 hover:text-orange-600 transition-colors text-sm font-medium"
               >
                 <ArrowLeft size={16} className="mr-1" />
                 กลับไปหน้าเข้าสู่ระบบ
-              </a>
+              </Link>
             </div>
           </div>
         </div>

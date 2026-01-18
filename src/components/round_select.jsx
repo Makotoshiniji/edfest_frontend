@@ -156,7 +156,7 @@ const ActivitySelection = () => {
 
       if (response.ok) {
         showToast("บันทึกข้อมูลสำเร็จ!");
-        setTimeout(() => navigate("/userdashboard"), 1500);
+        setTimeout(() => navigate("/user_dashboard"), 1500);
       } else {
         const err = await response.json();
         showToast(err.message || "เกิดข้อผิดพลาดในการบันทึก");
@@ -194,7 +194,7 @@ const ActivitySelection = () => {
       <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md shadow-sm border-b border-orange-100">
         <div className="container mx-auto px-4 py-4 max-w-5xl">
           <button
-            onClick={() => navigate("/userdashboard")}
+            onClick={() => navigate("/user_dashboard")}
             className="flex items-center text-gray-400 hover:text-orange-600 transition-colors mb-2 group font-prompt"
           >
             <ChevronLeft

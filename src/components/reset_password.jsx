@@ -10,9 +10,19 @@ import {
   AlertCircle,
   Loader2,
   Check,
+  Mail, // เพิ่มไอคอน Mail
 } from "lucide-react";
+// 1. เพิ่ม Import ที่จำเป็นสำหรับการรับค่าและเปลี่ยนหน้า
+import { useLocation, useNavigate } from "react-router-dom";
 
 const ResetPassword = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // 2. รับค่า Email และ OTP ที่ส่งต่อมาจากหน้า Verify Email
+  const email = location.state?.email || "";
+  const otp = location.state?.otp || "";
+
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -24,32 +34,37 @@ const ResetPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [error, setError] = useState(""); // เพิ่ม State เก็บ Error Message
 
-  // Trigger Entrance Animation
+  // Trigger Entrance Animation & Security Check
   useEffect(() => {
     setIsLoaded(true);
-  }, []);
+    // 3. ป้องกันการเข้าหน้า Reset โดยไม่ผ่านการ Verify OTP มาก่อน
+    if (!email || !otp) {
+      navigate("/forgot-password");
+    }
+  }, [email, otp, navigate]);
 
   // Calculate Password Strength
   useEffect(() => {
     let score = 0;
-    if (password.length >= 8) score += 1; // Length check
-    if (password.length >= 12) score += 1; // Extra length
-    if (/[A-Z]/.test(password)) score += 1; // Uppercase
-    if (/[0-9]/.test(password)) score += 1; // Number
-    if (/[^A-Za-z0-9]/.test(password)) score += 1; // Special char
+    if (password.length >= 8) score += 1;
+    if (password.length >= 12) score += 1;
+    if (/[A-Z]/.test(password)) score += 1;
+    if (/[0-9]/.test(password)) score += 1;
+    if (/[^A-Za-z0-9]/.test(password)) score += 1;
 
-    // Cap score at 4 for bar calculation
     setStrength(Math.min(score, 4));
 
-    // Check match real-time
     if (confirmPassword) {
       setIsMatch(password === confirmPassword);
     }
   }, [password, confirmPassword]);
 
-  const handleSubmit = (e) => {
+  // 4. ฟังก์ชัน Submit เพื่อเปลี่ยนรหัสผ่านจริง
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
 
     if (password.length < 8) return;
     if (password !== confirmPassword) {
@@ -59,11 +74,35 @@ const ResetPassword = () => {
 
     setIsLoading(true);
 
-    // Simulate API Call
-    setTimeout(() => {
+    try {
+      // ยิง API ไปที่ Laravel
+      const response = await fetch("http://127.0.0.1:8000/api/reset-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          otp,
+          password,
+          password_confirmation: confirmPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setIsSuccess(true); // ถ้าสำเร็จ แสดงหน้า Success
+      } else {
+        // ถ้าไม่ผ่าน (เช่น Token หมดอายุ)
+        setError(data.message || "ไม่สามารถเปลี่ยนรหัสผ่านได้");
+      }
+    } catch (err) {
+      setError("เชื่อมต่อ Server ไม่ได้");
+    } finally {
       setIsLoading(false);
-      setIsSuccess(true);
-    }, 1500);
+    }
   };
 
   const getStrengthColor = () => {
@@ -90,7 +129,6 @@ const ResetPassword = () => {
           body { font-family: 'Sarabun', sans-serif; }
           h1, h2, h3, h4, h5, h6, .font-prompt { font-family: 'Prompt', sans-serif; }
 
-          /* Entrance Animation */
           .card-enter {
             opacity: 0;
             transform: translateY(30px) scale(0.98);
@@ -101,10 +139,8 @@ const ResetPassword = () => {
             transform: translateY(0) scale(1);
           }
 
-          /* Smooth Width Transition for Strength Bar */
           .transition-width { transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.5s ease; }
           
-          /* Success Scale Animation */
           @keyframes scaleCheck {
             0% { transform: scale(0); opacity: 0; }
             60% { transform: scale(1.2); opacity: 1; }
@@ -117,7 +153,6 @@ const ResetPassword = () => {
       {/* --- Background --- */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white via-orange-50 to-white"></div>
-        {/* Decorative Shapes */}
         <div className="absolute top-10 left-10 w-32 h-32 bg-orange-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse"></div>
         <div
           className="absolute bottom-10 right-10 w-40 h-40 bg-yellow-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse"
@@ -132,7 +167,6 @@ const ResetPassword = () => {
         }`}
       >
         <div className="bg-white rounded-[2rem] shadow-2xl shadow-orange-100/50 border border-white p-8 md:p-10 relative overflow-hidden">
-          {/* Header Line */}
           <div className="absolute top-0 left-0 right-0 h-1 bg-orange-500"></div>
 
           {!isSuccess ? (
@@ -159,7 +193,33 @@ const ResetPassword = () => {
                 </p>
               </div>
 
+              {/* Show Error Message */}
+              {error && (
+                <div className="mb-6 p-3 bg-red-50 border border-red-100 rounded-xl flex items-center text-red-600 text-sm">
+                  <AlertCircle size={18} className="mr-2 flex-shrink-0" />
+                  {error}
+                </div>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-5">
+                {/* 5. แสดง Email (Read-only) เพื่อให้ User มั่นใจว่าเปลี่ยนให้ถูกคน */}
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700 font-prompt ml-1">
+                    บัญชีอีเมล
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                      <Mail size={18} />
+                    </div>
+                    <input
+                      type="email"
+                      value={email}
+                      readOnly
+                      className="w-full pl-10 pr-10 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 cursor-not-allowed font-sarabun"
+                    />
+                  </div>
+                </div>
+
                 {/* New Password */}
                 <div className="space-y-1">
                   <label className="text-sm font-medium text-gray-700 font-prompt ml-1">
@@ -216,7 +276,6 @@ const ResetPassword = () => {
                     </button>
                   </div>
 
-                  {/* Mismatch Error */}
                   {!isMatch && confirmPassword && (
                     <div className="flex items-center text-red-500 text-xs mt-1 animate-pulse ml-1">
                       <AlertCircle size={12} className="mr-1" />
@@ -237,10 +296,10 @@ const ResetPassword = () => {
                           strength <= 1
                             ? "text-red-500"
                             : strength === 2
-                            ? "text-orange-500"
-                            : strength === 3
-                            ? "text-yellow-600"
-                            : "text-green-600"
+                              ? "text-orange-500"
+                              : strength === 3
+                                ? "text-yellow-600"
+                                : "text-green-600"
                         }`}
                     >
                       {getStrengthText()}
@@ -315,12 +374,15 @@ const ResetPassword = () => {
                 ตั้งรหัสผ่านสำเร็จ!
               </h2>
               <p className="text-gray-500 font-light mb-8 animate-fade-in-up delay-100">
-                คุณสามารถใช้รหัสผ่านใหม่
-                <br />
+                คุณสามารถใช้รหัสผ่านใหม่ <br />
                 ในการเข้าสู่ระบบได้ทันที
               </p>
 
-              <button className="w-full py-3.5 bg-orange-600 text-white rounded-xl font-prompt font-bold shadow-lg shadow-orange-200 hover:bg-orange-700 hover:-translate-y-1 transition-all duration-300 flex items-center justify-center group animate-fade-in-up delay-200">
+              {/* 6. ปุ่มกลับหน้า Login จริงๆ */}
+              <button
+                onClick={() => navigate("/login")}
+                className="w-full py-3.5 bg-orange-600 text-white rounded-xl font-prompt font-bold shadow-lg shadow-orange-200 hover:bg-orange-700 hover:-translate-y-1 transition-all duration-300 flex items-center justify-center group animate-fade-in-up delay-200"
+              >
                 กลับไปหน้าเข้าสู่ระบบ
                 <ArrowRight
                   size={20}

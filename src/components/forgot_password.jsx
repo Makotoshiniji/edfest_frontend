@@ -8,8 +8,10 @@ import {
   Loader2,
   ShieldCheck,
 } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 
 const ForgotPassword = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -17,7 +19,6 @@ const ForgotPassword = () => {
   const [cooldown, setCooldown] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Trigger Entrance Animation
   useEffect(() => {
     setIsLoaded(true);
   }, []);
@@ -39,12 +40,12 @@ const ForgotPassword = () => {
       .match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setIsSuccess(false);
 
-    // 1. Client-side Validation
+    // Client-side Validation
     if (!email) {
       setError("กรุณากรอกอีเมลของคุณ");
       return;
@@ -56,38 +57,57 @@ const ForgotPassword = () => {
 
     setIsLoading(true);
 
-    // 2. Simulate API Call
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      // 1. ยิง API ส่งอีเมลเพื่อขอ OTP
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/forgot-password",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ email }),
+        },
+      );
 
-      // Mock Error: User not found (Test case)
-      if (email === "error@test.com") {
-        setError("ไม่พบอีเมลนี้ในระบบ กรุณาตรวจสอบความถูกต้อง");
-      } else {
-        // Success
+      const data = await response.json();
+
+      if (response.ok) {
+        // 2. ถ้าสำเร็จ
         setIsSuccess(true);
-        setCooldown(60); // Start 60s cooldown
+        setCooldown(60);
+
+        // 3. รอ 1.5 วินาที ให้ user เห็นข้อความสำเร็จ แล้วพาไปหน้า verify-email
+        setTimeout(() => {
+          navigate("/verify_email", { state: { email } });
+        }, 1500);
+      } else {
+        // กรณี Error (เช่น ไม่พบอีเมล)
+        setError(data.message || "เกิดข้อผิดพลาดในการส่งรหัส OTP");
       }
-    }, 1500);
+    } catch (err) {
+      console.error("Error:", err);
+      setError("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 relative overflow-hidden font-sans text-gray-800">
-      {/* --- Styles & Fonts --- */}
       <style>
         {`
           @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600&display=swap');
           body { font-family: 'Sarabun', sans-serif; }
           h1, h2, h3, h4, h5, h6, .font-prompt { font-family: 'Prompt', sans-serif; }
 
-          /* Background Animation */
           @keyframes float {
             0%, 100% { transform: translateY(0) scale(1); }
             50% { transform: translateY(-20px) scale(1.05); }
           }
           .bg-blob { animation: float 10s ease-in-out infinite; }
           
-          /* Card Animation */
           .card-enter {
             opacity: 0;
             transform: scale(0.95) translateY(20px);
@@ -98,7 +118,6 @@ const ForgotPassword = () => {
             transform: scale(1) translateY(0);
           }
 
-          /* Input Glow */
           .input-focus:focus-within {
             box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1);
             border-color: #f97316;
@@ -106,7 +125,6 @@ const ForgotPassword = () => {
         `}
       </style>
 
-      {/* --- Animated Background --- */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-orange-50 via-white to-gray-50"></div>
         <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-orange-100 rounded-full blur-3xl opacity-60 bg-blob"></div>
@@ -116,14 +134,12 @@ const ForgotPassword = () => {
         ></div>
       </div>
 
-      {/* --- Main Card --- */}
       <div
         className={`relative z-10 w-full max-w-md px-4 card-enter ${
           isLoaded ? "active" : ""
         }`}
       >
         <div className="bg-white rounded-[2rem] shadow-2xl shadow-orange-100/50 border border-white p-8 md:p-10 text-center">
-          {/* Icon Header */}
           <div className="flex justify-center mb-6">
             <div className="w-20 h-20 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500 shadow-inner mb-2 transform transition-transform hover:scale-105 hover:rotate-3 duration-500">
               <div className="relative">
@@ -145,7 +161,6 @@ const ForgotPassword = () => {
             ระบบจะส่งรหัส OTP เพื่อตั้งรหัสผ่านใหม่ไปให้คุณ
           </p>
 
-          {/* Success Message (Toast Style) */}
           {isSuccess && (
             <div className="mb-6 p-4 bg-green-50 border border-green-100 rounded-xl flex items-start text-left animate-pulse">
               <CheckCircle
@@ -157,13 +172,12 @@ const ForgotPassword = () => {
                   ส่งรหัส OTP เรียบร้อยแล้ว
                 </h4>
                 <p className="text-green-600 text-xs mt-1">
-                  กรุณาตรวจสอบกล่องข้อความในอีเมลของคุณ (รวมถึง Junk Mail)
+                  กำลังนำคุณไปยังหน้ากรอกรหัส OTP...
                 </p>
               </div>
             </div>
           )}
 
-          {/* Error Message */}
           {error && (
             <div className="mb-6 p-3 bg-red-50 border border-red-100 rounded-xl flex items-center text-red-600 text-sm text-left animate-bounce-short">
               <AlertCircle size={18} className="mr-2 flex-shrink-0" />
@@ -171,7 +185,6 @@ const ForgotPassword = () => {
             </div>
           )}
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="text-left">
               <label className="text-sm font-medium text-gray-700 font-prompt ml-1 mb-1 block">
@@ -217,8 +230,8 @@ const ForgotPassword = () => {
 
           {/* Footer Actions */}
           <div className="mt-8 pt-6 border-t border-dashed border-gray-200">
-            <a
-              href="#"
+            <Link
+              to="/login"
               className="inline-flex items-center text-gray-500 hover:text-orange-600 transition-colors font-medium font-prompt group text-sm"
             >
               <ArrowLeft
@@ -226,10 +239,9 @@ const ForgotPassword = () => {
                 className="mr-2 group-hover:-translate-x-1 transition-transform"
               />
               กลับไปหน้าเข้าสู่ระบบ
-            </a>
+            </Link>
           </div>
 
-          {/* Security Note */}
           <div className="mt-6 flex items-center justify-center text-xs text-gray-400 bg-gray-50 py-2 px-4 rounded-full inline-block mx-auto">
             <ShieldCheck size={14} className="inline mr-1.5 mb-0.5" />
             เพื่อความปลอดภัย รหัส OTP จะหมดอายุภายใน 5 นาที
@@ -237,7 +249,7 @@ const ForgotPassword = () => {
         </div>
 
         <p className="text-center text-gray-400 text-xs mt-6 font-light">
-          &copy; 2024 Faculty of Education, Khon Kaen University
+          &copy; 2026 Faculty of Education, Khon Kaen University
         </p>
       </div>
     </div>
