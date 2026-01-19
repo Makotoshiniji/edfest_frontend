@@ -28,36 +28,39 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setError(""); // เคลียร์ Error เก่าก่อน
+    setError("");
 
     try {
       const response = await fetch("http://127.0.0.1:8000/api/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        // 3. แก้ไขตรงนี้: ส่งค่า email และ password จาก state
-        body: JSON.stringify({
-          email: email,
-          password: password,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
+        // Login สำเร็จ
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
-
-        // ไปหน้า Dashboard
         navigate("/user_dashboard");
       } else {
-        // ใช้ setError เพื่อโชว์ข้อความแจ้งเตือนสวยๆ ด้านบนแทน alert
-        setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+        // 🔥 เพิ่ม Logic ตรงนี้: ดักจับเคสยังไม่ยืนยันอีเมล
+        if (response.status === 403 && data.email_not_verified) {
+          // แจ้งเตือนนิดหน่อย
+          alert("กรุณายืนยันอีเมลก่อนเข้าใช้งาน ระบบจะพาไปหน้ายืนยัน OTP");
+
+          // ส่งไปหน้า verify_mail พร้อมกับส่ง email ไปด้วย
+          navigate("/verify_mail", { state: { email: email } });
+          return;
+        }
+
+        // Error อื่นๆ (รหัสผิด ฯลฯ)
+        setError(data.message || "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+        setIsShake(true);
+        setTimeout(() => setIsShake(false), 500);
       }
-    } catch (error) {
-      console.error("Login Error:", error);
+    } catch (err) {
       setError("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
     } finally {
       setIsLoading(false);

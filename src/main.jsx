@@ -16,21 +16,26 @@ import AdminLogin from "./components/admin_login.jsx";
 import AdminDashboard from "./components/admin_dashboard.jsx";
 import AdminUserDetail from "./components/admin_user_detail";
 
+// 🔥 1. เพิ่มบรรทัดนี้: Import หน้า VerifyMail
+import VerifyMail from "./components/verify_mail.jsx";
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/register" element={<Register />} />
+
+        {/* 🔥 2. เพิ่มบรรทัดนี้: สร้าง Route สำหรับหน้ายืนยันอีเมล */}
+        <Route path="/verify_mail" element={<VerifyMail />} />
+
         <Route path="/login" element={<Login />} />
         <Route path="/user_dashboard" element={<UserDashboard />} />
         <Route path="/round_select" element={<Round_select />} />
         <Route path="/edit_profile" element={<EditProfile />} />
 
-        {/* หน้าลืมรหัสผ่าน (เข้าได้เลย) */}
+        {/* หน้าลืมรหัสผ่าน */}
         <Route path="/forgot_password" element={<ForgotPassword />} />
-
-        {/* --- แก้ไข 2 บรรทัดนี้ (ลบ /:token ออก) --- */}
         <Route path="/reset_password" element={<ResetPassword />} />
         <Route
           path="/verify_opt_resetpassword"

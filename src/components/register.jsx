@@ -15,12 +15,13 @@ import {
 import { useNavigate, Link } from "react-router-dom";
 
 const RegisterPage = () => {
-  const navigate = useNavigate(); // 1. แก้ไข: เพิ่มบรรทัดนี้
+  const navigate = useNavigate();
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
+    title: "",
     firstname: "",
     lastname: "",
     school: "",
@@ -101,12 +102,12 @@ const RegisterPage = () => {
     // Validate all required fields
     const newErrors = {};
 
-    // 2. แก้ไข: เปลี่ยนการเช็ค fullname เป็น firstname และ lastname
+    if (!formData.title) newErrors.title = "เลือกคำนำหน้า";
     if (!formData.firstname) newErrors.firstname = "กรุณากรอกชื่อจริง";
     if (!formData.lastname) newErrors.lastname = "กรุณากรอกนามสกุล";
 
     if (!formData.school) newErrors.school = "กรุณากรอกชื่อโรงเรียน";
-    if (!formData.grade) newErrors.grade = "กรุณาระเลือกระดับชั้น";
+    if (!formData.grade) newErrors.grade = "กรุณาเลือกระดับชั้น";
     if (!formData.phone) newErrors.phone = "กรุณากรอกเบอร์โทรศัพท์";
     if (!formData.email) newErrors.email = "กรุณากรอกอีเมล";
     if (!formData.password) newErrors.password = "กรุณากำหนดรหัสผ่าน";
@@ -132,12 +133,13 @@ const RegisterPage = () => {
         },
         // 2. Mapping ตัวแปรให้ตรงกับ Database (Snake Case)
         body: JSON.stringify({
+          title: formData.title,
           first_name: formData.firstname,
           last_name: formData.lastname,
           email: formData.email,
           phone: formData.phone,
           school: formData.school,
-          grade_level: formData.grade, // ใน DB ชื่อ grade_level
+          grade_level: formData.grade,
           password: formData.password,
           password_confirmation: formData.confirmPassword,
           is_term_accepted: formData.terms,
@@ -148,18 +150,18 @@ const RegisterPage = () => {
 
       if (response.ok) {
         // 3. สมัครสำเร็จ -> เก็บ Token -> ไปหน้า Dashboard
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
+        // localStorage.setItem("token", data.token);
+        // localStorage.setItem("user", JSON.stringify(data.user));
 
-        alert("สมัครสมาชิกสำเร็จ!");
-        navigate("/user_dashboard");
+        // alert("สมัครสมาชิกสำเร็จ!");
+        // navigate("/user_dashboard");
+        navigate("/verify_mail", { state: { email: formData.email } });
       } else {
         // 4. ถ้า Error (เช่น อีเมลซ้ำ)
         if (data.errors) {
           const apiErrors = {};
           if (data.errors.email) apiErrors.email = data.errors.email[0];
           if (data.errors.phone) apiErrors.phone = data.errors.phone[0];
-          // เพิ่ม error field อื่นๆ ถ้ามี
           setErrors(apiErrors);
         } else {
           alert(data.message || "เกิดข้อผิดพลาด");
@@ -224,9 +226,9 @@ const RegisterPage = () => {
         <div className="absolute inset-0 bg-white/30 backdrop-blur-[1px]"></div>
       </div>
 
-      {/* --- Main Card --- */}
+      {/* --- Main Card (ขยายให้กว้างขึ้นเป็น max-w-4xl) --- */}
       <div
-        className={`relative z-10 w-full max-w-2xl bg-white rounded-3xl shadow-2xl shadow-orange-100 border border-white p-8 md:p-12 card-enter ${
+        className={`relative z-10 w-full max-w-4xl bg-white rounded-3xl shadow-2xl shadow-orange-100 border border-white p-8 md:p-12 card-enter ${
           isLoaded ? "active" : ""
         }`}
       >
@@ -244,10 +246,41 @@ const RegisterPage = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Row 1: First Name & Last Name */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Row 1: Title (2), Firstname (5), Lastname (5) */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            {/* Title */}
+            <div className="md:col-span-2 space-y-1">
+              <label className="text-sm font-medium text-gray-700 font-prompt ml-1">
+                คำนำหน้า <span className="text-red-500">*</span>
+              </label>
+              <div className="input-wrapper relative">
+                <select
+                  name="title"
+                  value={formData.title}
+                  onChange={handleChange}
+                  className={`w-full pl-4 pr-8 py-2.5 bg-gray-50 border ${
+                    errors.title ? "border-red-300" : "border-gray-200"
+                  } rounded-xl focus:outline-none focus:ring-4 focus:ring-orange-100 focus:border-orange-500 transition-all duration-300 font-sarabun appearance-none cursor-pointer`}
+                >
+                  <option value="">เลือก</option>
+                  <option value="นาย">นาย</option>
+                  <option value="นางสาว">นางสาว</option>
+                  <option value="เด็กชาย">ด.ช.</option>
+                  <option value="เด็กหญิง">ด.ญ.</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+                  <ChevronDown size={16} />
+                </div>
+              </div>
+              {errors.title && (
+                <p className="text-xs text-red-500 mt-1 error-msg">
+                  {errors.title}
+                </p>
+              )}
+            </div>
+
             {/* First Name */}
-            <div className="space-y-1">
+            <div className="md:col-span-5 space-y-1">
               <label className="text-sm font-medium text-gray-700 font-prompt ml-1">
                 ชื่อจริง <span className="text-red-500">*</span>
               </label>
@@ -265,7 +298,7 @@ const RegisterPage = () => {
                       ? "border-red-300 focus:ring-red-200"
                       : "border-gray-200 focus:ring-orange-200 focus:border-orange-500"
                   } rounded-xl focus:outline-none focus:ring-4 transition-all duration-300 font-sarabun`}
-                  placeholder="กรอกชื่อจริง"
+                  placeholder="กรอกชื่อจริงภาษาไทย"
                 />
               </div>
               {errors.firstname && (
@@ -277,7 +310,7 @@ const RegisterPage = () => {
             </div>
 
             {/* Last Name */}
-            <div className="space-y-1">
+            <div className="md:col-span-5 space-y-1">
               <label className="text-sm font-medium text-gray-700 font-prompt ml-1">
                 นามสกุล <span className="text-red-500">*</span>
               </label>
@@ -295,7 +328,7 @@ const RegisterPage = () => {
                       ? "border-red-300 focus:ring-red-200"
                       : "border-gray-200 focus:ring-orange-200 focus:border-orange-500"
                   } rounded-xl focus:outline-none focus:ring-4 transition-all duration-300 font-sarabun`}
-                  placeholder="กรอกนามสกุล"
+                  placeholder="กรอกนามสกุลภาษาไทย"
                 />
               </div>
               {errors.lastname && (
@@ -307,10 +340,10 @@ const RegisterPage = () => {
             </div>
           </div>
 
-          {/* Row 2: School & Grade */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Row 2: School (7) & Grade (5) */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
             {/* School */}
-            <div className="space-y-1">
+            <div className="md:col-span-7 space-y-1">
               <label className="text-sm font-medium text-gray-700 font-prompt ml-1">
                 โรงเรียน <span className="text-red-500">*</span>
               </label>
@@ -328,7 +361,7 @@ const RegisterPage = () => {
                       ? "border-red-300 focus:ring-red-200"
                       : "border-gray-200 focus:ring-orange-200 focus:border-orange-500"
                   } rounded-xl focus:outline-none focus:ring-4 transition-all duration-300 font-sarabun`}
-                  placeholder="ชื่อโรงเรียนของน้อง"
+                  placeholder="ชื่อโรงเรียนของน้อง (ระบุชื่อเต็ม)"
                 />
               </div>
               {errors.school && (
@@ -340,7 +373,7 @@ const RegisterPage = () => {
             </div>
 
             {/* Grade Dropdown */}
-            <div className="space-y-1">
+            <div className="md:col-span-5 space-y-1">
               <label className="text-sm font-medium text-gray-700 font-prompt ml-1">
                 ระดับชั้น <span className="text-red-500">*</span>
               </label>
@@ -359,9 +392,9 @@ const RegisterPage = () => {
                   } rounded-xl focus:outline-none focus:ring-4 transition-all duration-300 font-sarabun appearance-none cursor-pointer`}
                 >
                   <option value="">เลือกระดับชั้น</option>
-                  <option value="m4">มัธยมศึกษาปีที่ 4</option>
-                  <option value="m5">มัธยมศึกษาปีที่ 5</option>
-                  <option value="m6">มัธยมศึกษาปีที่ 6</option>
+                  <option value="ม.4">มัธยมศึกษาปีที่ 4</option>
+                  <option value="ม.5">มัธยมศึกษาปีที่ 5</option>
+                  <option value="ม.6">มัธยมศึกษาปีที่ 6</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
                   <ChevronDown size={18} />
@@ -376,10 +409,10 @@ const RegisterPage = () => {
             </div>
           </div>
 
-          {/* Row 3: Phone & Email */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Row 3: Phone (5) & Email (7) */}
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
             {/* Phone */}
-            <div className="space-y-1">
+            <div className="md:col-span-5 space-y-1">
               <label className="text-sm font-medium text-gray-700 font-prompt ml-1">
                 เบอร์โทรศัพท์ <span className="text-red-500">*</span>
               </label>
@@ -410,7 +443,7 @@ const RegisterPage = () => {
             </div>
 
             {/* Email */}
-            <div className="space-y-1">
+            <div className="md:col-span-7 space-y-1">
               <label className="text-sm font-medium text-gray-700 font-prompt ml-1">
                 อีเมล (Username) <span className="text-red-500">*</span>
               </label>

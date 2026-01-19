@@ -12,6 +12,7 @@ import {
   ChevronDown,
   Lock,
   ShieldAlert,
+  Loader2,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -23,7 +24,8 @@ const EditProfile = () => {
 
   // State สำหรับข้อมูลจริง
   const [formData, setFormData] = useState({
-    firstname: "", // เปลี่ยน fullname เป็น first_name + last_name
+    title: "",
+    firstname: "",
     lastname: "",
     school: "",
     grade: "",
@@ -46,10 +48,11 @@ const EditProfile = () => {
 
     const user = JSON.parse(storedUser);
     setFormData({
+      title: user.title || "",
       firstname: user.first_name || "",
       lastname: user.last_name || "",
       school: user.school || "",
-      grade: user.grade_level || "", // เช็คชื่อ field ใน DB ให้ตรง (grade_level หรือ grade)
+      grade: user.grade_level || "",
       phone: user.phone || "",
       email: user.email || "",
     });
@@ -58,12 +61,12 @@ const EditProfile = () => {
   // Validation Logic
   const validate = () => {
     const newErrors = {};
+    if (!formData.title) newErrors.title = "กรุณาเลือกคำนำหน้า";
     if (!formData.firstname.trim()) newErrors.firstname = "กรุณากรอกชื่อจริง";
     if (!formData.lastname.trim()) newErrors.lastname = "กรุณากรอกนามสกุล";
     if (!formData.school.trim()) newErrors.school = "กรุณากรอกชื่อโรงเรียน";
     if (!formData.grade) newErrors.grade = "กรุณาเลือกระดับชั้น";
 
-    // Simple Thai Phone Validation
     const phoneRegex = /^0[0-9]{9}$/;
     if (!formData.phone) {
       newErrors.phone = "กรุณากรอกเบอร์โทรศัพท์";
@@ -91,18 +94,17 @@ const EditProfile = () => {
       const token = localStorage.getItem("token");
 
       try {
-        // ยิง API อัปเดตข้อมูล (สมมติว่าใช้ Route นี้)
-        // **ต้องเช็ค Backend ว่าใช้ Route อะไร เช่น /api/user หรือ /api/update-profile**
         const response = await fetch(
           "http://127.0.0.1:8000/api/update-profile",
           {
-            method: "POST", // หรือ PUT ตามที่ Backend กำหนด
+            method: "POST",
             headers: {
               "Content-Type": "application/json",
               Accept: "application/json",
               Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
+              title: formData.title,
               first_name: formData.firstname,
               last_name: formData.lastname,
               phone: formData.phone,
@@ -115,15 +117,14 @@ const EditProfile = () => {
         const data = await response.json();
 
         if (response.ok) {
-          // อัปเดตข้อมูลใน LocalStorage ด้วย (สำคัญมาก เพื่อให้หน้าอื่นเห็นข้อมูลใหม่ทันที)
           const oldUser = JSON.parse(localStorage.getItem("user"));
-          const newUser = { ...oldUser, ...data.user }; // data.user คือข้อมูลใหม่ที่ Backend ส่งกลับมา
+          const newUser = { ...oldUser, ...data.user };
           localStorage.setItem("user", JSON.stringify(newUser));
 
           setShowToast(true);
           setTimeout(() => {
             setShowToast(false);
-            navigate("/user_dashboard"); // บันทึกเสร็จกลับหน้าหลัก
+            navigate("/user_dashboard");
           }, 1500);
         } else {
           alert(data.message || "เกิดข้อผิดพลาดในการบันทึก");
@@ -143,7 +144,7 @@ const EditProfile = () => {
         "คุณต้องการยกเลิกการแก้ไขใช่หรือไม่? ข้อมูลที่เปลี่ยนแปลงจะไม่ถูกบันทึก",
       )
     ) {
-      navigate("/user_dashboard"); // กลับหน้าหลัก
+      navigate("/user_dashboard");
     }
   };
 
@@ -167,8 +168,8 @@ const EditProfile = () => {
           }
           
           .input-group:focus-within svg { color: #ea580c; }
+          .error-msg { animation: slideDownFade 0.3s ease-out forwards; }
           
-          /* Toast Animation */
           @keyframes slideUpFade {
             from { transform: translate(-50%, 100%); opacity: 0; }
             to { transform: translate(-50%, 0); opacity: 1; }
@@ -177,22 +178,18 @@ const EditProfile = () => {
         `}
       </style>
 
-      {/* Main Card */}
+      {/* Main Card (ขยายเป็น max-w-4xl) */}
       <div
-        className={`w-full max-w-2xl bg-white rounded-3xl shadow-xl shadow-orange-100/50 border border-white overflow-hidden card-enter ${isLoaded ? "active" : ""}`}
+        className={`w-full max-w-4xl bg-white rounded-3xl shadow-xl shadow-orange-100/50 border border-white overflow-hidden card-enter ${isLoaded ? "active" : ""}`}
       >
         {/* Header */}
         <div className="bg-orange-50/50 p-8 border-b border-orange-100 flex items-center gap-6">
-          <div className="w-20 h-20 bg-white rounded-full p-1 shadow-md border border-orange-100 relative group cursor-pointer">
+          <div className="w-20 h-20 bg-white rounded-full p-1 shadow-md border border-orange-100 relative group cursor-pointer flex-shrink-0">
             <img
               src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.firstname}`}
               alt="Avatar"
-              className="w-full h-full rounded-full bg-gray-50"
+              className="w-full h-full rounded-full bg-gray-50 object-cover"
             />
-            {/* ซ่อนปุ่มเปลี่ยนรูปไว้ก่อน เพราะยังไม่ได้ทำระบบ Upload */}
-            {/* <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <span className="text-white text-xs font-prompt">เปลี่ยนรูป</span>
-            </div> */}
           </div>
           <div>
             <h2 className="font-prompt text-2xl font-bold text-gray-800">
@@ -205,11 +202,45 @@ const EditProfile = () => {
         </div>
 
         {/* Form */}
-        <div className="p-8 md:p-10">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Row 1: Firstname & Lastname */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
+        <div className="p-8 md:p-12">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Row 1: Title (2), Firstname (5), Lastname (5) */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+              {/* Title */}
+              <div className="md:col-span-2 space-y-1">
+                <label className="text-sm font-medium text-gray-700 font-prompt ml-1">
+                  คำนำหน้า <span className="text-red-500">*</span>
+                </label>
+                <div className="input-group relative">
+                  <select
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
+                    className={`w-full pl-4 pr-8 py-3 bg-gray-50 border ${
+                      errors.title
+                        ? "border-red-300"
+                        : "border-gray-200 focus:border-orange-500"
+                    } rounded-xl focus:outline-none focus:ring-4 focus:ring-orange-100 transition-all duration-300 font-sarabun appearance-none cursor-pointer`}
+                  >
+                    <option value="">เลือก</option>
+                    <option value="นาย">นาย</option>
+                    <option value="นางสาว">นางสาว</option>
+                    <option value="เด็กชาย">ด.ช.</option>
+                    <option value="เด็กหญิง">ด.ญ.</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+                    <ChevronDown size={16} />
+                  </div>
+                </div>
+                {errors.title && (
+                  <p className="text-red-500 text-xs mt-1 ml-1 error-msg">
+                    {errors.title}
+                  </p>
+                )}
+              </div>
+
+              {/* First Name */}
+              <div className="md:col-span-5 space-y-1">
                 <label className="text-sm font-medium text-gray-700 font-prompt ml-1">
                   ชื่อจริง <span className="text-red-500">*</span>
                 </label>
@@ -228,14 +259,15 @@ const EditProfile = () => {
                   />
                 </div>
                 {errors.firstname && (
-                  <p className="text-red-500 text-xs flex items-center mt-1 ml-1">
+                  <p className="text-red-500 text-xs flex items-center mt-1 ml-1 error-msg">
                     <AlertCircle size={12} className="mr-1" />{" "}
                     {errors.firstname}
                   </p>
                 )}
               </div>
 
-              <div className="space-y-2">
+              {/* Last Name */}
+              <div className="md:col-span-5 space-y-1">
                 <label className="text-sm font-medium text-gray-700 font-prompt ml-1">
                   นามสกุล <span className="text-red-500">*</span>
                 </label>
@@ -254,17 +286,17 @@ const EditProfile = () => {
                   />
                 </div>
                 {errors.lastname && (
-                  <p className="text-red-500 text-xs flex items-center mt-1 ml-1">
+                  <p className="text-red-500 text-xs flex items-center mt-1 ml-1 error-msg">
                     <AlertCircle size={12} className="mr-1" /> {errors.lastname}
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Row 2: School & Grade */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Row 2: School (7) & Grade (5) */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
               {/* School */}
-              <div className="space-y-2">
+              <div className="md:col-span-7 space-y-1">
                 <label className="text-sm font-medium text-gray-700 font-prompt ml-1">
                   โรงเรียน <span className="text-red-500">*</span>
                 </label>
@@ -283,14 +315,14 @@ const EditProfile = () => {
                   />
                 </div>
                 {errors.school && (
-                  <p className="text-red-500 text-xs flex items-center mt-1 ml-1">
+                  <p className="text-red-500 text-xs flex items-center mt-1 ml-1 error-msg">
                     <AlertCircle size={12} className="mr-1" /> {errors.school}
                   </p>
                 )}
               </div>
 
               {/* Grade */}
-              <div className="space-y-2">
+              <div className="md:col-span-5 space-y-1">
                 <label className="text-sm font-medium text-gray-700 font-prompt ml-1">
                   ระดับชั้น <span className="text-red-500">*</span>
                 </label>
@@ -309,24 +341,23 @@ const EditProfile = () => {
                     <option value="m4">มัธยมศึกษาปีที่ 4</option>
                     <option value="m5">มัธยมศึกษาปีที่ 5</option>
                     <option value="m6">มัธยมศึกษาปีที่ 6</option>
-                    <option value="vc">ปวช. / ปวส.</option>
                   </select>
                   <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
                     <ChevronDown size={18} />
                   </div>
                 </div>
                 {errors.grade && (
-                  <p className="text-red-500 text-xs flex items-center mt-1 ml-1">
+                  <p className="text-red-500 text-xs flex items-center mt-1 ml-1 error-msg">
                     <AlertCircle size={12} className="mr-1" /> {errors.grade}
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Row 3: Phone & Email */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Row 3: Phone (5) & Email (7) */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
               {/* Phone */}
-              <div className="space-y-2">
+              <div className="md:col-span-5 space-y-1">
                 <label className="text-sm font-medium text-gray-700 font-prompt ml-1">
                   เบอร์โทรศัพท์ <span className="text-red-500">*</span>
                 </label>
@@ -346,14 +377,14 @@ const EditProfile = () => {
                   />
                 </div>
                 {errors.phone && (
-                  <p className="text-red-500 text-xs flex items-center mt-1 ml-1">
+                  <p className="text-red-500 text-xs flex items-center mt-1 ml-1 error-msg">
                     <AlertCircle size={12} className="mr-1" /> {errors.phone}
                   </p>
                 )}
               </div>
 
               {/* Email (Readonly) */}
-              <div className="space-y-2">
+              <div className="md:col-span-7 space-y-1">
                 <label className="text-sm font-medium text-gray-500 font-prompt ml-1 flex items-center">
                   อีเมล (บัญชีผู้ใช้){" "}
                   <Lock size={12} className="ml-2 opacity-50" />
