@@ -12,6 +12,9 @@ import ForgotPassword from "./components/forgot_password.jsx";
 import ResetPassword from "./components/reset_password.jsx";
 import VerifyOTPResetpassword from "./components/verify_opt_resetpassword.jsx";
 import EditProfile from "./components/edit_profile.jsx";
+import AdminLogin from "./components/admin_login.jsx";
+import AdminDashboard from "./components/admin_dashboard.jsx";
+import AdminUserDetail from "./components/admin_user_detail";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -33,6 +36,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           path="/verify_opt_resetpassword"
           element={<VerifyOTPResetpassword />}
         />
+
+        {/* หน้า Admin */}
+        <Route path="/admin_login" element={<AdminLogin />} />
+        <Route path="/admin_dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/users/:id" element={<AdminUserDetail />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,

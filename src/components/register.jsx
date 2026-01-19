@@ -152,7 +152,7 @@ const RegisterPage = () => {
         localStorage.setItem("user", JSON.stringify(data.user));
 
         alert("สมัครสมาชิกสำเร็จ!");
-        navigate("/userdashboard");
+        navigate("/user_dashboard");
       } else {
         // 4. ถ้า Error (เช่น อีเมลซ้ำ)
         if (data.errors) {
