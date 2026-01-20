@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom"; // 1. เพิ่ม Import
+import { useNavigate, Link } from "react-router-dom";
 import {
   GraduationCap,
   Mail,
@@ -8,12 +8,13 @@ import {
   Eye,
   EyeOff,
   AlertCircle,
-  Home,
   ChevronLeft,
 } from "lucide-react";
+// 1. นำเข้า axios ที่ตั้งค่าไว้
+import axios from "../lib/axios";
 
 const LoginPage = () => {
-  const navigate = useNavigate(); // 2. ประกาศ navigate
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -31,51 +32,47 @@ const LoginPage = () => {
     setError("");
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      // 2. เรียก CSRF Cookie ก่อน Login เสมอ (สำคัญมากสำหรับ Sanctum SPA)
+      await axios.get("/sanctum/csrf-cookie");
 
-      const data = await response.json();
+      // 3. ยิง API Login (ใช้ axios แทน fetch)
+      const response = await axios.post("/api/login", { email, password });
 
-      if (response.ok) {
-        // Login สำเร็จ
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-        navigate("/user_dashboard");
-      } else {
-        // 🔥 แก้ไขตรงนี้: ถ้ายังไม่ยืนยันอีเมล ให้ส่ง OTP ใหม่ให้ด้วยเลย
-        if (response.status === 403 && data.email_not_verified) {
-          // 1. เรียก API ส่ง OTP ใหม่ทันที (ไม่ต้องรอ user กด)
-          try {
-            await fetch("http://127.0.0.1:8000/api/resend-verification-otp", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email }),
-            });
+      // 4. ถ้า Login สำเร็จ (Axios จะไม่ Error ถ้า Status 200)
+      // ❌ ลบการเก็บ Token ทิ้ง: localStorage.setItem("token", data.token);
 
-            // 2. แจ้งเตือน user
-            alert(
-              "กรุณายืนยันอีเมลก่อนเข้าใช้งาน\nระบบได้ส่งรหัส OTP ใหม่ไปยังอีเมลของคุณแล้ว",
-            );
-          } catch (err) {
-            console.error("Failed to resend OTP", err);
-            alert("กรุณายืนยันอีเมลก่อนเข้าใช้งาน");
-          }
+      // เก็บข้อมูล User ไว้อ้างอิงได้
+      localStorage.setItem("user", JSON.stringify(response.data.user));
 
-          // 3. ส่งไปหน้า verify_mail พร้อมอีเมล
-          navigate("/verify_mail", { state: { email: email } });
-          return;
+      navigate("/user_dashboard");
+    } catch (err) {
+      // 5. การจัดการ Error ของ Axios
+      const status = err.response?.status;
+      const data = err.response?.data;
+
+      // เคส: ยังไม่ยืนยันอีเมล (403)
+      if (status === 403 && data?.email_not_verified) {
+        try {
+          // ใช้ axios ยิงขอ OTP ใหม่
+          await axios.post("/api/resend-verification-otp", { email });
+
+          alert(
+            "กรุณายืนยันอีเมลก่อนเข้าใช้งาน\nระบบได้ส่งรหัส OTP ใหม่ไปยังอีเมลของคุณแล้ว",
+          );
+        } catch (resendErr) {
+          console.error("Failed to resend OTP", resendErr);
+          alert("กรุณายืนยันอีเมลก่อนเข้าใช้งาน");
         }
 
-        // Error อื่นๆ (รหัสผิด ฯลฯ)
-        setError(data.message || "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
-        setIsShake(true);
-        setTimeout(() => setIsShake(false), 500);
+        // ไปหน้า Verify
+        navigate("/verify_mail", { state: { email: email } });
+        return;
       }
-    } catch (err) {
-      setError("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
+
+      // เคส: Error อื่นๆ (เช่น 401 รหัสผิด, 422 Validate ไม่ผ่าน)
+      setError(data?.message || "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+      // setIsShake(true); // ถ้ามี state นี้
+      // setTimeout(() => setIsShake(false), 500);
     } finally {
       setIsLoading(false);
     }
@@ -83,6 +80,7 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen relative flex items-center justify-center overflow-hidden bg-gray-50 font-sans text-gray-800">
+      {/* ... (ส่วน Style และ Layout เหมือนเดิม ไม่ต้องแก้) ... */}
       <style>
         {`
           @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600&display=swap');
@@ -141,7 +139,6 @@ const LoginPage = () => {
       <div
         className={`relative z-10 w-full max-w-md p-6 sm:p-8 card-enter ${isLoaded ? "active" : ""}`}
       >
-        {/* 4.1 แก้ลิ้งค์กลับหน้าหลัก */}
         <Link
           to="/"
           className="inline-flex items-center text-gray-400 hover:text-orange-600 mb-6 transition-colors text-sm font-prompt group"
@@ -220,7 +217,6 @@ const LoginPage = () => {
                 </button>
               </div>
               <div className="flex justify-end pt-1">
-                {/* 4.2 แก้ลิ้งค์ลืมรหัสผ่าน */}
                 <Link
                   to="/forgot_password"
                   className="text-sm text-orange-500 font-medium hover:text-orange-600 relative group font-prompt"
@@ -273,7 +269,7 @@ const LoginPage = () => {
 
           <div className="mt-8 text-center">
             <p className="text-gray-500 text-sm font-sarabun">
-              ยังไม่มีบัญชีผู้ใช้? {/* 4.3 แก้ลิ้งค์สมัครสมาชิก */}
+              ยังไม่มีบัญชีผู้ใช้?{" "}
               <Link
                 to="/register"
                 className="font-bold text-orange-600 hover:text-orange-700 transition-colors font-prompt"

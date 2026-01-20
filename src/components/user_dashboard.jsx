@@ -19,6 +19,8 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
+// 1. Import axios ที่ตั้งค่าไว้
+import axios from "../lib/axios";
 
 const UserDashboard = () => {
   const navigate = useNavigate();
@@ -31,55 +33,59 @@ const UserDashboard = () => {
   const [user, setUser] = useState(null);
   const [selectedActivities, setSelectedActivities] = useState([]);
 
-  const totalRounds = 4; // จำนวนรอบสูงสุดที่ให้เลือก
+  const totalRounds = 4;
   const currentSelection = selectedActivities.length;
   const isComplete = currentSelection >= totalRounds;
 
   useEffect(() => {
-    // 1. ตรวจสอบ Token และข้อมูล User
-    const token = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
-
-    if (!token || !storedUser) {
-      navigate("/login");
-      return;
-    }
-
-    setUser(JSON.parse(storedUser));
-
-    // 2. ดึงข้อมูลกิจกรรมที่ลงทะเบียนไว้
-    const fetchRegistrations = async () => {
+    // 2. โหลดข้อมูล User และ Registrations ผ่าน Axios
+    const fetchData = async () => {
       try {
-        const response = await fetch(
-          "http://127.0.0.1:8000/api/my-registrations",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: "application/json",
-            },
-          },
-        );
+        // ยิง API เช็ค Session และดึงข้อมูล User พร้อมกัน (หรือแยกก็ได้)
+        // แต่เพื่อความชัวร์ ยิงดึง User ก่อน ถ้า 401 จะเด้งออกเอง
+        // หมายเหตุ: Sanctum SPA ไม่ต้องส่ง Bearer Token ใน Header
+        // เพราะส่ง Cookie ไปให้อัตโนมัติแล้วจากไฟล์ axios.js
 
-        if (response.ok) {
-          const data = await response.json();
-          setSelectedActivities(data);
-        }
+        // Parallel requests
+        const [userRes, regRes] = await Promise.all([
+          axios.get("/api/user"),
+          axios.get("/api/my-registrations"),
+        ]);
+
+        setUser(userRes.data);
+        setSelectedActivities(regRes.data);
+
+        // อัปเดต localStorage เผื่อไว้ใช้ที่อื่น (Optional)
+        localStorage.setItem("user", JSON.stringify(userRes.data));
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Auth Error:", error);
+        if (error.response && error.response.status === 401) {
+          // Session หมดอายุ หรือยังไม่ได้ Login
+          localStorage.removeItem("user");
+          navigate("/login");
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchRegistrations();
+    fetchData();
   }, [navigate]);
 
   // Helpers
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (window.confirm("คุณต้องการออกจากระบบใช่หรือไม่?")) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      navigate("/login");
+      try {
+        // 3. เรียก API Logout เพื่อทำลาย Session ฝั่ง Server
+        await axios.post("/api/logout");
+      } catch (err) {
+        console.error("Logout failed", err);
+      } finally {
+        // ลบข้อมูลฝั่ง Client และเด้งไปหน้า Login
+        localStorage.removeItem("user");
+        // localStorage.removeItem("token"); // ไม่ต้องใช้แล้ว
+        navigate("/login");
+      }
     }
   };
 
@@ -128,11 +134,7 @@ const UserDashboard = () => {
   const handleRemove = async (roundId) => {
     if (!window.confirm("คุณต้องการยกเลิกการจองรอบนี้ใช่หรือไม่?")) return;
 
-    const token = localStorage.getItem("token");
     try {
-      // 1. ส่งคำสั่งลบไปที่ Backend (ต้องมี API รองรับ หรือใช้ Sync แบบส่งค่าว่าง)
-      // แต่วิธีที่ง่ายที่สุดสำหรับระบบ Sync คือการส่งข้อมูลชุดเดิม "โดยตัดตัวที่จะลบออก"
-
       // กรองเอาเฉพาะตัวที่ *ไม่ได้* ถูกลบ
       const updatedList = selectedActivities.filter(
         (activity) => activity.round_id !== roundId,
@@ -144,28 +146,15 @@ const UserDashboard = () => {
         station_id: item.station_id,
       }));
 
-      const response = await fetch(
-        "http://127.0.0.1:8000/api/registrations/sync",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ registrations: payload }),
-        },
-      );
+      // 4. ใช้ axios ยิง Sync (Cookie ส่งไปเอง)
+      await axios.post("/api/registrations/sync", { registrations: payload });
 
-      if (response.ok) {
-        // 2. ถ้าสำเร็จ ให้อัปเดตหน้าจอทันที (ไม่ต้องโหลดใหม่)
-        setSelectedActivities(updatedList);
-        setShowToast(true); // แจ้งเตือนว่าลบแล้ว (ถ้ามี state toast)
-      } else {
-        alert("เกิดข้อผิดพลาดในการลบข้อมูล");
-      }
+      // ถ้าสำเร็จ (ไม่ Error)
+      setSelectedActivities(updatedList);
+      setShowToast(true);
     } catch (error) {
       console.error("Remove Error:", error);
-      alert("ไม่สามารถเชื่อมต่อ Server ได้");
+      alert("ไม่สามารถเชื่อมต่อ Server ได้ หรือ Session หมดอายุ");
     }
   };
 
