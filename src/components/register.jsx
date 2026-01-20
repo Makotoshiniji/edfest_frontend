@@ -562,9 +562,15 @@ const RegisterPage = () => {
                   to="#"
                   className="text-orange-600 underline decoration-orange-300 hover:decoration-orange-600"
                 >
-                  เงื่อนไขและข้อตกลงการใช้งาน
+                  เงื่อนไขข้อตกลงการใช้งาน
                 </Link>{" "}
-                รวมถึงนโยบายความเป็นส่วนตัว
+                และ
+                <Link
+                  to="/privacy_policy"
+                  className="text-orange-600 underline decoration-orange-300 hover:decoration-orange-600"
+                >
+                  รวมถึงนโยบายความเป็นส่วนตัว
+                </Link>{" "}
               </span>
             </label>
           </div>
