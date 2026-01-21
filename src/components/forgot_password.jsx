@@ -9,6 +9,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import axios from "../lib/axios";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -58,37 +59,29 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      // 1. ยิง API ส่งอีเมลเพื่อขอ OTP
-      const response = await fetch(
-        "http://127.0.0.1:8000/api/forgot-password",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({ email }),
-        },
-      );
+      // 1. 👇 ขอ CSRF Cookie ก่อน (แก้ Error 419)
+      await axios.get("/sanctum/csrf-cookie");
 
-      const data = await response.json();
+      // 2. 👇 ใช้ axios แทน fetch (และไม่ต้องใส่ http://localhost... เพราะตั้งใน axios.js แล้ว)
+      await axios.post("/api/forgot-password", { email });
 
-      if (response.ok) {
-        // 2. ถ้าสำเร็จ
-        setIsSuccess(true);
-        setCooldown(60);
+      // 3. ถ้าสำเร็จ (Axios จะไม่ Error) ทำงานต่อได้เลย
+      setIsSuccess(true);
+      setCooldown(60);
 
-        // 3. รอ 1.5 วินาที ให้ user เห็นข้อความสำเร็จ แล้วพาไปหน้า verify-email
-        setTimeout(() => {
-          navigate("/verify_opt_resetpassword", { state: { email } });
-        }, 1500);
-      } else {
-        // กรณี Error (เช่น ไม่พบอีเมล)
-        setError(data.message || "เกิดข้อผิดพลาดในการส่งรหัส OTP");
-      }
+      setTimeout(() => {
+        navigate("/verify_opt_resetpassword", { state: { email } });
+      }, 1500);
     } catch (err) {
+      // 4. จัดการ Error แบบ Axios
       console.error("Error:", err);
-      setError("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
+
+      const errorMessage =
+        err.response?.data?.message ||
+        err.response?.data?.email?.[0] ||
+        "เกิดข้อผิดพลาดในการส่งรหัส OTP";
+
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

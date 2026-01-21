@@ -1,13 +1,16 @@
-// src/lib/axios.js (สร้างไฟล์ใหม่)
 import axios from "axios";
 
-const axiosClient = axios.create({
-  baseURL: "http://127.0.0.1:8000", // URL Backend
-  withCredentials: true, // ✅ สำคัญมาก! เพื่อให้ส่ง Cookie
+const axiosInstance = axios.create({
+  baseURL: "http://localhost:8000", // ตรวจสอบว่า Port ตรงกับ Laravel ของคุณ
+
+  // 👇 บรรทัดนี้สำคัญที่สุด ถ้าไม่มีบรรทัดนี้ จะแก้ 419 ไม่หาย
+  withCredentials: true,
+
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
+    "X-Requested-With": "XMLHttpRequest",
   },
 });
 
-export default axiosClient;
+export default axiosInstance;
