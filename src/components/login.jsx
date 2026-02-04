@@ -38,30 +38,20 @@ const LoginPage = () => {
       // 3. ยิง API Login (ใช้ axios แทน fetch)
       const response = await axios.post("/api/login", { email, password });
 
-      // 4. ถ้า Login สำเร็จ (Axios จะไม่ Error ถ้า Status 200)
-      // ❌ ลบการเก็บ Token ทิ้ง: localStorage.setItem("token", data.token);
+      if (response.ok) {
+        // Login สำเร็จ
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        navigate("/user_dashboard");
+      } else {
+        // 🔥 เพิ่ม Logic ตรงนี้: ดักจับเคสยังไม่ยืนยันอีเมล
+        if (response.status === 403 && data.email_not_verified) {
+          // แจ้งเตือนนิดหน่อย
+          alert("กรุณายืนยันอีเมลก่อนเข้าใช้งาน ระบบจะพาไปหน้ายืนยัน OTP");
 
-      // เก็บข้อมูล User ไว้อ้างอิงได้
-      localStorage.setItem("user", JSON.stringify(response.data.user));
-
-      navigate("/user_dashboard");
-    } catch (err) {
-      // 5. การจัดการ Error ของ Axios
-      const status = err.response?.status;
-      const data = err.response?.data;
-
-      // เคส: ยังไม่ยืนยันอีเมล (403)
-      if (status === 403 && data?.email_not_verified) {
-        try {
-          // ใช้ axios ยิงขอ OTP ใหม่
-          await axios.post("/api/resend-verification-otp", { email });
-
-          alert(
-            "กรุณายืนยันอีเมลก่อนเข้าใช้งาน\nระบบได้ส่งรหัส OTP ใหม่ไปยังอีเมลของคุณแล้ว",
-          );
-        } catch (resendErr) {
-          console.error("Failed to resend OTP", resendErr);
-          alert("กรุณายืนยันอีเมลก่อนเข้าใช้งาน");
+          // ส่งไปหน้า verify_mail พร้อมกับส่ง email ไปด้วย
+          navigate("/verify_mail", { state: { email: email } });
+          return;
         }
 
         // ไปหน้า Verify

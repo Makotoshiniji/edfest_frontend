@@ -15,7 +15,6 @@ import EditProfile from "./components/edit_profile.jsx";
 import AdminLogin from "./components/admin_login.jsx";
 import AdminDashboard from "./components/admin_dashboard.jsx";
 import AdminUserDetail from "./components/admin_user_detail";
-import PrivacyPolicy from "./components/privacy_policy.jsx";
 
 // 🔥 1. เพิ่มบรรทัดนี้: Import หน้า VerifyMail
 import VerifyMail from "./components/verify_mail.jsx";
@@ -26,7 +25,6 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/privacy_policy" element={<PrivacyPolicy />} />
 
         {/* 🔥 2. เพิ่มบรรทัดนี้: สร้าง Route สำหรับหน้ายืนยันอีเมล */}
         <Route path="/verify_mail" element={<VerifyMail />} />
