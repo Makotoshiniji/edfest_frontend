@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom"; // เพิ่ม useLocation เผื่อรับ state
 import {
   GraduationCap,
   Mail,
@@ -24,6 +24,10 @@ const LoginPage = () => {
 
   useEffect(() => {
     setIsLoaded(true);
+    // เช็คว่ามี Token อยู่แล้วไหม (ถ้ามีให้ไปหน้า Dashboard เลย)
+    if (localStorage.getItem("auth_token")) {
+      navigate("/user_dashboard");
+    }
   }, []);
 
   const handleSubmit = async (e) => {
@@ -32,37 +36,38 @@ const LoginPage = () => {
     setError("");
 
     try {
-      // 2. เรียก CSRF Cookie ก่อน Login เสมอ (สำคัญมากสำหรับ Sanctum SPA)
-      await axios.get("/sanctum/csrf-cookie");
-
-      // 3. ยิง API Login (ใช้ axios แทน fetch)
+      // 3. ยิง API Login
       const response = await axios.post("/api/login", { email, password });
 
-      if (response.ok) {
-        // Login สำเร็จ
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-        navigate("/user_dashboard");
-      } else {
-        // 🔥 เพิ่ม Logic ตรงนี้: ดักจับเคสยังไม่ยืนยันอีเมล
-        if (response.status === 403 && data.email_not_verified) {
-          // แจ้งเตือนนิดหน่อย
-          alert("กรุณายืนยันอีเมลก่อนเข้าใช้งาน ระบบจะพาไปหน้ายืนยัน OTP");
+      // ถ้า Axios ผ่านมาถึงบรรทัดนี้ได้ แปลว่า status 200 OK แน่นอน
+      const data = response.data;
 
-          // ส่งไปหน้า verify_mail พร้อมกับส่ง email ไปด้วย
-          navigate("/verify_mail", { state: { email: email } });
-          return;
-        }
+      // ✅ Login สำเร็จ: เก็บ Token และ User
+      localStorage.setItem("auth_token", data.access_token); // ชื่อต้องตรงกับ Backend
+      localStorage.setItem("user", JSON.stringify(data.user));
 
-        // ไปหน้า Verify
+      // ⚡️ ตั้งค่า Header ให้ Axios ใช้งานได้ทันทีในครั้งถัดไป
+      axios.defaults.headers.common["Authorization"] =
+        `Bearer ${data.access_token}`;
+
+      // ไปหน้า Dashboard
+      navigate("/user_dashboard");
+    } catch (err) {
+      console.error("Login Error:", err);
+
+      // ดึง Error Response มาดู
+      const status = err.response?.status;
+      const data = err.response?.data;
+
+      // 🔥 เคส: อีเมลยังไม่ยืนยัน (Backend ส่ง 403)
+      if (status === 403 && data?.email_not_verified) {
+        alert("กรุณายืนยันอีเมลก่อนเข้าใช้งาน ระบบจะพาไปหน้ายืนยัน OTP");
         navigate("/verify_mail", { state: { email: email } });
         return;
       }
 
-      // เคส: Error อื่นๆ (เช่น 401 รหัสผิด, 422 Validate ไม่ผ่าน)
+      // เคส: รหัสผิด หรืออื่นๆ
       setError(data?.message || "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
-      // setIsShake(true); // ถ้ามี state นี้
-      // setTimeout(() => setIsShake(false), 500);
     } finally {
       setIsLoading(false);
     }
