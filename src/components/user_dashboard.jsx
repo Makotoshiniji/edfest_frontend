@@ -56,8 +56,9 @@ const UserDashboard = () => {
       } catch (error) {
         console.error("Auth Error:", error);
         if (error.response && error.response.status === 401) {
-          // Session หมดอายุ หรือยังไม่ได้ Login
+          // ✅ แก้เป็น: ลบให้หมดทั้ง user และ token
           localStorage.removeItem("user");
+          localStorage.removeItem("auth_token"); // <--- เพิ่มบรรทัดนี้สำคัญมาก
           navigate("/login");
         }
       } finally {

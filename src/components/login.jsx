@@ -25,9 +25,8 @@ const LoginPage = () => {
   useEffect(() => {
     setIsLoaded(true);
     // เช็คว่ามี Token อยู่แล้วไหม (ถ้ามีให้ไปหน้า Dashboard เลย)
-    if (localStorage.getItem("auth_token")) {
-      navigate("/user_dashboard");
-    }
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("user");
   }, []);
 
   const handleSubmit = async (e) => {
