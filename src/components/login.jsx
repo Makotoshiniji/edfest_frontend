@@ -36,8 +36,8 @@ const LoginPage = () => {
     setError("");
 
     try {
-      // 3. ยิง API Login
-      const response = await axios.post("/api/login", { email, password });
+      // ✅ ของใหม่ (ใส่แค่ชื่อ Route พอ เพราะ Base URL มี /api ให้แล้ว)
+      const response = await axios.post("/login", { email, password });
 
       // ถ้า Axios ผ่านมาถึงบรรทัดนี้ได้ แปลว่า status 200 OK แน่นอน
       const data = response.data;

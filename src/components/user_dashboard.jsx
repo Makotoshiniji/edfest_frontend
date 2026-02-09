@@ -41,15 +41,11 @@ const UserDashboard = () => {
     // 2. โหลดข้อมูล User และ Registrations ผ่าน Axios
     const fetchData = async () => {
       try {
-        // ยิง API เช็ค Session และดึงข้อมูล User พร้อมกัน (หรือแยกก็ได้)
-        // แต่เพื่อความชัวร์ ยิงดึง User ก่อน ถ้า 401 จะเด้งออกเอง
-        // หมายเหตุ: Sanctum SPA ไม่ต้องส่ง Bearer Token ใน Header
-        // เพราะส่ง Cookie ไปให้อัตโนมัติแล้วจากไฟล์ axios.js
-
         // Parallel requests
         const [userRes, regRes] = await Promise.all([
-          axios.get("/api/user"),
-          axios.get("/api/my-registrations"),
+          // ✅ แก้ไข: เอา /api ออก (เพราะใน axios.js มีให้แล้ว)
+          axios.get("/user"),
+          axios.get("/my-registrations"),
         ]);
 
         setUser(userRes.data);
@@ -76,14 +72,14 @@ const UserDashboard = () => {
   const handleLogout = async () => {
     if (window.confirm("คุณต้องการออกจากระบบใช่หรือไม่?")) {
       try {
-        // 3. เรียก API Logout เพื่อทำลาย Session ฝั่ง Server
-        await axios.post("/api/logout");
+        // ✅ แก้ไข: เอา /api ออก
+        await axios.post("/logout");
       } catch (err) {
         console.error("Logout failed", err);
       } finally {
         // ลบข้อมูลฝั่ง Client และเด้งไปหน้า Login
         localStorage.removeItem("user");
-        // localStorage.removeItem("token"); // ไม่ต้องใช้แล้ว
+        localStorage.removeItem("auth_token"); // ลบ Token ด้วยถ้ามี
         navigate("/login");
       }
     }
@@ -146,8 +142,8 @@ const UserDashboard = () => {
         station_id: item.station_id,
       }));
 
-      // 4. ใช้ axios ยิง Sync (Cookie ส่งไปเอง)
-      await axios.post("/api/registrations/sync", { registrations: payload });
+      // ✅ แก้ไข: เอา /api ออก
+      await axios.post("/registrations/sync", { registrations: payload });
 
       // ถ้าสำเร็จ (ไม่ Error)
       setSelectedActivities(updatedList);

@@ -1,20 +1,21 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  MailCheck, // เปลี่ยนไอคอนให้สื่อความหมาย
+  MailCheck,
   Timer,
   ArrowLeft,
   AlertCircle,
   CheckCircle2,
   RotateCcw,
   Loader2,
-  Mail,
 } from "lucide-react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
+// 1. นำเข้า axios ที่เราตั้งค่าไว้ (เพื่อให้ BaseURL และ Header ถูกต้อง)
+import axios from "../lib/axios";
 
 const VerifyMail = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const email = location.state?.email || ""; // รับ email ที่ส่งมาจากหน้า Register
+  const email = location.state?.email || "";
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
@@ -23,16 +24,35 @@ const VerifyMail = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [countdown, setCountdown] = useState(60);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isSending, setIsSending] = useState(false); // เพิ่ม State เช็คสถานะการส่ง
 
   const inputRefs = useRef([]);
 
-  // ถ้าไม่มี email ให้ดีดกลับไปหน้า Register หรือ Login
+  // Check Email & Load Animation
   useEffect(() => {
     if (!email) {
       navigate("/register");
     }
     setIsLoaded(true);
   }, [email, navigate]);
+
+  // 🔥 Auto Send OTP on Mount (ยิงทันทีที่เข้าหน้านี้)
+  useEffect(() => {
+    const sendInitialOtp = async () => {
+      if (!email) return;
+      try {
+        // ใช้ axios ยิงไปที่ Path ย่อ (เพราะตั้ง BaseURL ไว้แล้ว)
+        await axios.post("/resend-verification-otp", { email });
+        console.log("Auto-sent OTP successfully");
+      } catch (err) {
+        console.error("Auto-send failed:", err);
+        // ไม่ต้อง Alert Error ก็ได้ เพื่อไม่ให้ user ตกใจตอนเข้ามา
+      }
+    };
+
+    // เรียกทำงานทันที
+    sendInitialOtp();
+  }, [email]);
 
   // Countdown Timer
   useEffect(() => {
@@ -89,32 +109,25 @@ const VerifyMail = () => {
     inputRefs.current[nextIndex].focus();
   };
 
-  // Handle Resend OTP
+  // Handle Resend OTP (Manual Click)
   const handleResend = async () => {
-    if (countdown > 0) return;
+    if (countdown > 0 || isSending) return;
 
+    setIsSending(true);
     try {
-      // ยิง API ขอ OTP ใหม่สำหรับการยืนยันอีเมล
-      const response = await fetch(
-        "http://76.13.179.18/api/resend-verification-otp",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        },
-      );
+      // ใช้ axios แทน fetch
+      await axios.post("/resend-verification-otp", { email });
 
-      if (response.ok) {
-        setCountdown(60);
-        setOtp(["", "", "", "", "", ""]);
-        setError("");
-        inputRefs.current[0].focus();
-        alert("ส่งรหัสยืนยันใหม่เรียบร้อยแล้ว");
-      } else {
-        alert("ไม่สามารถส่งรหัสได้ในขณะนี้");
-      }
+      setCountdown(60);
+      setOtp(["", "", "", "", "", ""]);
+      setError("");
+      inputRefs.current[0].focus();
+      alert("ส่งรหัสยืนยันใหม่เรียบร้อยแล้ว");
     } catch (error) {
-      alert("เชื่อมต่อ Server ไม่ได้");
+      console.error(error);
+      alert("ไม่สามารถส่งรหัสได้ในขณะนี้ กรุณาลองใหม่");
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -129,37 +142,36 @@ const VerifyMail = () => {
     setError("");
 
     try {
-      // ยิง API ยืนยันอีเมล
-      const response = await fetch("http://76.13.179.18/api/verify-email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({ email, otp: otpValue }),
+      // ใช้ axios ยิง Verify
+      const response = await axios.post("/verify-email", {
+        email,
+        otp: otpValue,
       });
 
-      const data = await response.json();
+      // ถ้า axios ไม่ error แปลว่า success (200 OK)
+      const data = response.data;
 
-      if (response.ok) {
-        setIsSuccess(true);
-        // เก็บ Token และข้อมูล User ลง LocalStorage (เหมือนตอน Login สำเร็จ)
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
+      setIsSuccess(true);
+      // ✅ เก็บ Token และ User ลง LocalStorage ทันที
+      localStorage.setItem("auth_token", data.access_token); // ใช้ชื่อให้ตรงกับหน้าอื่น (auth_token)
+      localStorage.setItem("user", JSON.stringify(data.user));
 
-        // พาไปหน้า Dashboard
-        setTimeout(() => {
-          navigate("/user_dashboard");
-        }, 1500);
-      } else {
-        setError(data.message || "รหัส OTP ไม่ถูกต้อง");
-        setIsShake(true);
-        setTimeout(() => setIsShake(false), 500);
-        setOtp(["", "", "", "", "", ""]);
-        inputRefs.current[0].focus();
-      }
+      // ✅ ตั้ง Header ให้ axios ทันที เพื่อให้พร้อมใช้งานหน้าต่อไป
+      axios.defaults.headers.common["Authorization"] =
+        `Bearer ${data.access_token}`;
+
+      setTimeout(() => {
+        navigate("/user_dashboard");
+      }, 1500);
     } catch (err) {
-      setError("เชื่อมต่อ Server ไม่ได้");
+      console.error(err);
+      // ดึง Error Message จาก Backend
+      const message = err.response?.data?.message || "รหัส OTP ไม่ถูกต้อง";
+      setError(message);
+      setIsShake(true);
+      setTimeout(() => setIsShake(false), 500);
+      setOtp(["", "", "", "", "", ""]);
+      inputRefs.current[0].focus();
     } finally {
       setIsLoading(false);
     }
@@ -308,13 +320,22 @@ const VerifyMail = () => {
             ) : (
               <button
                 onClick={handleResend}
-                className="inline-flex items-center text-orange-600 hover:text-orange-700 font-semibold text-sm transition-colors group"
+                disabled={isSending}
+                className={`inline-flex items-center text-orange-600 hover:text-orange-700 font-semibold text-sm transition-colors group ${
+                  isSending ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
-                <RotateCcw
-                  size={16}
-                  className="mr-1.5 group-hover:rotate-180 transition-transform duration-500"
-                />
-                ส่งรหัส OTP ใหม่
+                {isSending ? (
+                  <>กำลังส่ง...</>
+                ) : (
+                  <>
+                    <RotateCcw
+                      size={16}
+                      className="mr-1.5 group-hover:rotate-180 transition-transform duration-500"
+                    />
+                    ส่งรหัส OTP ใหม่
+                  </>
+                )}
               </button>
             )}
           </div>
