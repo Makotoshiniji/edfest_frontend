@@ -220,13 +220,13 @@ const AdminUserDetail = () => {
       try {
         // 🔥 ใช้ Promise.all ดึงข้อมูล User และ Rounds พร้อมกัน
         const [userRes, roundsRes] = await Promise.all([
-          fetch(`http://127.0.0.1:8000/api/admin/users/${id}`, {
+          fetch(`http://76.13.179.18/api/admin/users/${id}`, {
             headers: {
               Authorization: `Bearer ${token}`,
               Accept: "application/json",
             },
           }),
-          fetch(`http://127.0.0.1:8000/api/rounds`, {
+          fetch(`http://76.13.179.18/api/rounds`, {
             headers: {
               Accept: "application/json",
               // ถ้า API rounds ต้องการ token ให้ใส่เพิ่มตรงนี้

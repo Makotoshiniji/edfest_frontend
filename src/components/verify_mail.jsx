@@ -96,7 +96,7 @@ const VerifyMail = () => {
     try {
       // ยิง API ขอ OTP ใหม่สำหรับการยืนยันอีเมล
       const response = await fetch(
-        "http://127.0.0.1:8000/api/resend-verification-otp",
+        "http://76.13.179.18/api/resend-verification-otp",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -130,7 +130,7 @@ const VerifyMail = () => {
 
     try {
       // ยิง API ยืนยันอีเมล
-      const response = await fetch("http://127.0.0.1:8000/api/verify-email", {
+      const response = await fetch("http://76.13.179.18/api/verify-email", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -94,25 +94,22 @@ const EditProfile = () => {
       const token = localStorage.getItem("token");
 
       try {
-        const response = await fetch(
-          "http://127.0.0.1:8000/api/update-profile",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              title: formData.title,
-              first_name: formData.firstname,
-              last_name: formData.lastname,
-              phone: formData.phone,
-              school: formData.school,
-              grade_level: formData.grade,
-            }),
+        const response = await fetch("http://76.13.179.18/api/update-profile", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
           },
-        );
+          body: JSON.stringify({
+            title: formData.title,
+            first_name: formData.firstname,
+            last_name: formData.lastname,
+            phone: formData.phone,
+            school: formData.school,
+            grade_level: formData.grade,
+          }),
+        });
 
         const data = await response.json();
 

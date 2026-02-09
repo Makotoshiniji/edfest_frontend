@@ -125,7 +125,7 @@ const RegisterPage = () => {
 
     try {
       // 1. ยิง API ไปที่ Laravel
-      const response = await fetch("http://127.0.0.1:8000/api/register", {
+      const response = await fetch("http://76.13.179.18/api/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

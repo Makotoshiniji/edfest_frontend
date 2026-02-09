@@ -455,7 +455,7 @@ const App = () => {
                   <div className="absolute inset-0 bg-gradient-to-tr from-orange-500/20 to-transparent pointer-events-none z-10"></div>
 
                   <img
-                    src="assets/picture/ED0-1-of-29.jpg"
+                    src="/assets/picture/ED0-1-of-29.jpg"
                     alt="Education Activity"
                     className="w-full h-full object-cover transform transition-transform duration-1000 group-hover:scale-105"
                   />

@@ -56,7 +56,7 @@ const AdminDashboard = () => {
       try {
         // ยิง API 1: ดึงสถิติ Dashboard
         const statsResponse = await fetch(
-          "http://127.0.0.1:8000/api/admin/dashboard-stats",
+          "http://76.13.179.18/api/admin/dashboard-stats",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -72,7 +72,7 @@ const AdminDashboard = () => {
 
         // ยิง API 2: ดึงรายชื่อผู้สมัคร (Recent Users)
         const usersResponse = await fetch(
-          "http://127.0.0.1:8000/api/admin/users?limit=5", // ดึงมา 5 คนล่าสุด
+          "http://76.13.179.18/api/admin/users?limit=5", // ดึงมา 5 คนล่าสุด
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -101,7 +101,7 @@ const AdminDashboard = () => {
     if (window.confirm("ต้องการออกจากระบบผู้ดูแลใช่หรือไม่?")) {
       const token = localStorage.getItem("admin_token");
       try {
-        await fetch("http://127.0.0.1:8000/api/admin/logout", {
+        await fetch("http://76.13.179.18/api/admin/logout", {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,

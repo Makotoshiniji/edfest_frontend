@@ -35,7 +35,7 @@ const ActivitySelection = () => {
     const fetchData = async () => {
       try {
         // 1. ดึง Master Data
-        const response = await fetch("http://127.0.0.1:8000/api/initial-data");
+        const response = await fetch("http://76.13.179.18/api/initial-data");
         const data = await response.json();
 
         setRounds(data.rounds);
@@ -56,7 +56,7 @@ const ActivitySelection = () => {
         const token = localStorage.getItem("token");
         if (token) {
           const regResponse = await fetch(
-            "http://127.0.0.1:8000/api/my-registrations",
+            "http://76.13.179.18/api/my-registrations",
             {
               headers: { Authorization: `Bearer ${token}` },
             },
@@ -143,7 +143,7 @@ const ActivitySelection = () => {
     try {
       // ยิงไปที่ API Sync ตัวใหม่
       const response = await fetch(
-        "http://127.0.0.1:8000/api/registrations/sync",
+        "http://76.13.179.18/api/registrations/sync",
         {
           method: "POST",
           headers: {

@@ -94,14 +94,11 @@ const OtpVerification = () => {
 
     // ยิง API ขอ OTP ใหม่ (เหมือนหน้า Forgot Password)
     try {
-      const response = await fetch(
-        "http://127.0.0.1:8000/api/forgot-password",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        },
-      );
+      const response = await fetch("http://76.13.179.18/api/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
 
       if (response.ok) {
         setCountdown(60);
@@ -129,7 +126,7 @@ const OtpVerification = () => {
 
     try {
       // ยิง API ตรวจสอบ OTP
-      const response = await fetch("http://127.0.0.1:8000/api/verify-otp", {
+      const response = await fetch("http://76.13.179.18/api/verify-otp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
