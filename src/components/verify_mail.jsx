@@ -7,9 +7,10 @@ import {
   CheckCircle2,
   RotateCcw,
   Loader2,
+  Mail,
 } from "lucide-react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
-// 1. นำเข้า axios ที่เราตั้งค่าไว้ (เพื่อให้ BaseURL และ Header ถูกต้อง)
+// 1. นำเข้า axios (สำคัญมาก)
 import axios from "../lib/axios";
 
 const VerifyMail = () => {
@@ -24,7 +25,8 @@ const VerifyMail = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [countdown, setCountdown] = useState(60);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isSending, setIsSending] = useState(false); // เพิ่ม State เช็คสถานะการส่ง
+  // เพิ่ม state กันยิงรัว
+  const [isSending, setIsSending] = useState(false);
 
   const inputRefs = useRef([]);
 
@@ -36,21 +38,20 @@ const VerifyMail = () => {
     setIsLoaded(true);
   }, [email, navigate]);
 
-  // 🔥 Auto Send OTP on Mount (ยิงทันทีที่เข้าหน้านี้)
+  // 🔥 จุดที่แก้: สั่งยิง OTP ทันทีเมื่อเข้าหน้านี้ (Auto Send)
   useEffect(() => {
     const sendInitialOtp = async () => {
       if (!email) return;
       try {
-        // ใช้ axios ยิงไปที่ Path ย่อ (เพราะตั้ง BaseURL ไว้แล้ว)
+        // ไม่ต้องรอ user กด ยิงไปเลย
         await axios.post("/resend-verification-otp", { email });
         console.log("Auto-sent OTP successfully");
       } catch (err) {
         console.error("Auto-send failed:", err);
-        // ไม่ต้อง Alert Error ก็ได้ เพื่อไม่ให้ user ตกใจตอนเข้ามา
+        // ไม่ต้อง Alert Error เดี๋ยว user ตกใจ (เพราะบางทีอาจจะเพิ่งส่งไปตอนสมัคร)
       }
     };
 
-    // เรียกทำงานทันที
     sendInitialOtp();
   }, [email]);
 
@@ -115,7 +116,7 @@ const VerifyMail = () => {
 
     setIsSending(true);
     try {
-      // ใช้ axios แทน fetch
+      // เปลี่ยนจาก fetch เป็น axios
       await axios.post("/resend-verification-otp", { email });
 
       setCountdown(60);
@@ -142,21 +143,21 @@ const VerifyMail = () => {
     setError("");
 
     try {
-      // ใช้ axios ยิง Verify
+      // เปลี่ยนจาก fetch เป็น axios
       const response = await axios.post("/verify-email", {
         email,
         otp: otpValue,
       });
 
-      // ถ้า axios ไม่ error แปลว่า success (200 OK)
       const data = response.data;
 
       setIsSuccess(true);
-      // ✅ เก็บ Token และ User ลง LocalStorage ทันที
-      localStorage.setItem("auth_token", data.access_token); // ใช้ชื่อให้ตรงกับหน้าอื่น (auth_token)
+
+      // ✅ แก้ชื่อ Key ให้ตรงกับระบบใหม่ (auth_token)
+      localStorage.setItem("auth_token", data.access_token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
-      // ✅ ตั้ง Header ให้ axios ทันที เพื่อให้พร้อมใช้งานหน้าต่อไป
+      // ✅ ตั้ง Header ให้ axios ทันที เพื่อให้ไปต่อได้เลยไม่ต้อง refresh
       axios.defaults.headers.common["Authorization"] =
         `Bearer ${data.access_token}`;
 
@@ -165,7 +166,7 @@ const VerifyMail = () => {
       }, 1500);
     } catch (err) {
       console.error(err);
-      // ดึง Error Message จาก Backend
+      // ดึง Error Message จาก axios response
       const message = err.response?.data?.message || "รหัส OTP ไม่ถูกต้อง";
       setError(message);
       setIsShake(true);
