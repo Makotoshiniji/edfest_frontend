@@ -9,6 +9,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+// Import axios ที่เราตั้งค่าไว้
 import axios from "../lib/axios";
 
 const ForgotPassword = () => {
@@ -59,13 +60,14 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      // 1. 👇 ขอ CSRF Cookie ก่อน (แก้ Error 419)
-      await axios.get("/sanctum/csrf-cookie");
+      // ❌ ลบส่วนนี้ทิ้ง: ไม่ต้องขอ CSRF Cookie แล้ว
+      // await axios.get("/sanctum/csrf-cookie");
 
-      // 2. 👇 ใช้ axios แทน fetch (และไม่ต้องใส่ http://localhost... เพราะตั้งใน axios.js แล้ว)
-      await axios.post("/api/forgot-password", { email });
+      // ✅ แก้ไข: เอา /api ออก (เหลือแค่ /forgot-password)
+      // เพราะ axios.js มี baseURL เป็น .../api ให้แล้ว
+      await axios.post("/forgot-password", { email });
 
-      // 3. ถ้าสำเร็จ (Axios จะไม่ Error) ทำงานต่อได้เลย
+      // ถ้าสำเร็จ
       setIsSuccess(true);
       setCooldown(60);
 
@@ -73,7 +75,6 @@ const ForgotPassword = () => {
         navigate("/verify_opt_resetpassword", { state: { email } });
       }, 1500);
     } catch (err) {
-      // 4. จัดการ Error แบบ Axios
       console.error("Error:", err);
 
       const errorMessage =

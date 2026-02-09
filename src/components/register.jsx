@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import {
   User,
   School,
@@ -11,8 +12,11 @@ import {
   ArrowRight,
   GraduationCap,
   Loader2,
+  ChevronLeft, // ✅ 1. เพิ่มตัวนี้เข้ามา
 } from "lucide-react";
-import { useNavigate, Link } from "react-router-dom";
+// 2. ลบ import react-router-dom ที่ซ้ำออก
+// 3. เรียกใช้ axios ของเรา
+import axios from "../lib/axios";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -72,7 +76,7 @@ const RegisterPage = () => {
 
     setFormData((prev) => ({ ...prev, [name]: val }));
 
-    // Real-time validation for specific fields
+    // Real-time validation
     if (
       name === "password" ||
       name === "confirmPassword" ||
@@ -82,14 +86,12 @@ const RegisterPage = () => {
       const errorMsg = validateField(name, val);
       setErrors((prev) => ({ ...prev, [name]: errorMsg }));
 
-      // Re-validate confirm password if password changes
       if (name === "password" && formData.confirmPassword) {
         const matchError =
           val !== formData.confirmPassword ? "รหัสผ่านไม่ตรงกัน" : "";
         setErrors((prev) => ({ ...prev, confirmPassword: matchError }));
       }
     } else {
-      // Clear error for other fields when typing
       if (errors[name]) {
         setErrors((prev) => ({ ...prev, [name]: "" }));
       }
@@ -124,52 +126,35 @@ const RegisterPage = () => {
     setIsSubmitting(true);
 
     try {
-      // 1. ยิง API ไปที่ Laravel
-      const response = await fetch("http://76.13.179.18/api/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        // 2. Mapping ตัวแปรให้ตรงกับ Database (Snake Case)
-        body: JSON.stringify({
-          title: formData.title,
-          first_name: formData.firstname,
-          last_name: formData.lastname,
-          email: formData.email,
-          phone: formData.phone,
-          school: formData.school,
-          grade_level: formData.grade,
-          password: formData.password,
-          password_confirmation: formData.confirmPassword,
-          is_term_accepted: formData.terms,
-        }),
+      // ✅ ใช้ axios แทน fetch (สั้นกว่าและจัดการ header ให้เอง)
+      const response = await axios.post("/register", {
+        title: formData.title,
+        first_name: formData.firstname,
+        last_name: formData.lastname,
+        email: formData.email,
+        phone: formData.phone,
+        school: formData.school,
+        grade_level: formData.grade,
+        password: formData.password,
+        password_confirmation: formData.confirmPassword,
+        is_term_accepted: formData.terms,
       });
 
-      const data = await response.json();
+      // ถ้า axios ผ่านมาถึงตรงนี้แปลว่าสำเร็จ (200 OK)
+      navigate("/verify_mail", { state: { email: formData.email } });
+    } catch (err) {
+      console.error("Register Error:", err);
+      const data = err.response?.data;
 
-      if (response.ok) {
-        // 3. สมัครสำเร็จ -> เก็บ Token -> ไปหน้า Dashboard
-        // localStorage.setItem("token", data.token);
-        // localStorage.setItem("user", JSON.stringify(data.user));
-
-        // alert("สมัครสมาชิกสำเร็จ!");
-        // navigate("/user_dashboard");
-        navigate("/verify_mail", { state: { email: formData.email } });
+      // จัดการ Error
+      if (data?.errors) {
+        const apiErrors = {};
+        if (data.errors.email) apiErrors.email = data.errors.email[0];
+        if (data.errors.phone) apiErrors.phone = data.errors.phone[0];
+        setErrors(apiErrors);
       } else {
-        // 4. ถ้า Error (เช่น อีเมลซ้ำ)
-        if (data.errors) {
-          const apiErrors = {};
-          if (data.errors.email) apiErrors.email = data.errors.email[0];
-          if (data.errors.phone) apiErrors.phone = data.errors.phone[0];
-          setErrors(apiErrors);
-        } else {
-          alert(data.message || "เกิดข้อผิดพลาด");
-        }
+        alert(data?.message || "เกิดข้อผิดพลาด ไม่สามารถเชื่อมต่อได้");
       }
-    } catch (error) {
-      console.error("Register Error:", error);
-      alert("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
     } finally {
       setIsSubmitting(false);
     }
@@ -226,12 +211,22 @@ const RegisterPage = () => {
         <div className="absolute inset-0 bg-white/30 backdrop-blur-[1px]"></div>
       </div>
 
-      {/* --- Main Card (ขยายให้กว้างขึ้นเป็น max-w-4xl) --- */}
+      {/* --- Main Card --- */}
       <div
         className={`relative z-10 w-full max-w-4xl bg-white rounded-3xl shadow-2xl shadow-orange-100 border border-white p-8 md:p-12 card-enter ${
           isLoaded ? "active" : ""
         }`}
       >
+        <Link
+          to="/"
+          className="inline-flex items-center text-gray-400 hover:text-orange-600 mb-6 transition-colors text-sm font-prompt group"
+        >
+          <ChevronLeft
+            size={16}
+            className="mr-1 group-hover:-translate-x-1 transition-transform"
+          />
+          กลับหน้าหลัก
+        </Link>
         {/* Header */}
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl text-white shadow-lg mb-4 transform hover:rotate-12 transition-transform duration-500">
