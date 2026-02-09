@@ -15,6 +15,8 @@ import {
   Loader2,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+// 1. ✅ Import axios ตัวเก่งของเรา
+import axios from "../lib/axios";
 
 const EditProfile = () => {
   const navigate = useNavigate();
@@ -39,23 +41,29 @@ const EditProfile = () => {
   useEffect(() => {
     setIsLoaded(true);
     const storedUser = localStorage.getItem("user");
-    const token = localStorage.getItem("token");
+    // ✅ แก้ชื่อ Key ให้ถูกต้อง
+    const token = localStorage.getItem("auth_token");
 
     if (!token || !storedUser) {
       navigate("/login");
       return;
     }
 
-    const user = JSON.parse(storedUser);
-    setFormData({
-      title: user.title || "",
-      firstname: user.first_name || "",
-      lastname: user.last_name || "",
-      school: user.school || "",
-      grade: user.grade_level || "",
-      phone: user.phone || "",
-      email: user.email || "",
-    });
+    try {
+      const user = JSON.parse(storedUser);
+      setFormData({
+        title: user.title || "",
+        firstname: user.first_name || "",
+        lastname: user.last_name || "",
+        school: user.school || "",
+        grade: user.grade_level || "",
+        phone: user.phone || "",
+        email: user.email || "",
+      });
+    } catch (e) {
+      console.error("Error parsing user data", e);
+      navigate("/login");
+    }
   }, [navigate]);
 
   // Validation Logic
@@ -91,44 +99,43 @@ const EditProfile = () => {
     e.preventDefault();
     if (validate()) {
       setIsSaving(true);
-      const token = localStorage.getItem("token");
 
       try {
-        const response = await fetch("http://76.13.179.18/api/update-profile", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            title: formData.title,
-            first_name: formData.firstname,
-            last_name: formData.lastname,
-            phone: formData.phone,
-            school: formData.school,
-            grade_level: formData.grade,
-          }),
+        // ✅ เปลี่ยนมาใช้ axios (ไม่ต้องใส่ Header เอง, ไม่ต้องใส่ IP เอง)
+        const response = await axios.post("/update-profile", {
+          title: formData.title,
+          first_name: formData.firstname,
+          last_name: formData.lastname,
+          phone: formData.phone,
+          school: formData.school,
+          grade_level: formData.grade,
         });
 
-        const data = await response.json();
+        // axios จะ throw error ถ้า status ไม่ใช่ 200, ดังนั้นถ้ามาถึงตรงนี้คือสำเร็จ
+        const data = response.data;
 
-        if (response.ok) {
-          const oldUser = JSON.parse(localStorage.getItem("user"));
-          const newUser = { ...oldUser, ...data.user };
-          localStorage.setItem("user", JSON.stringify(newUser));
+        // อัปเดตข้อมูลใน LocalStorage ใหม่
+        const oldUser = JSON.parse(localStorage.getItem("user") || "{}");
+        const newUser = { ...oldUser, ...data.user };
+        localStorage.setItem("user", JSON.stringify(newUser));
 
-          setShowToast(true);
-          setTimeout(() => {
-            setShowToast(false);
-            navigate("/user_dashboard");
-          }, 1500);
-        } else {
-          alert(data.message || "เกิดข้อผิดพลาดในการบันทึก");
-        }
+        setShowToast(true);
+        setTimeout(() => {
+          setShowToast(false);
+          navigate("/user_dashboard");
+        }, 1500);
       } catch (error) {
         console.error("Update Error:", error);
-        alert("ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้");
+        // ดึงข้อความ Error จาก Server (ถ้ามี)
+        const msg =
+          error.response?.data?.message ||
+          "ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้";
+        alert(msg);
+
+        if (error.response?.status === 401) {
+          // ถ้า Token หมดอายุจริงๆ ให้เด้งออก
+          navigate("/login");
+        }
       } finally {
         setIsSaving(false);
       }
@@ -335,9 +342,9 @@ const EditProfile = () => {
                       ${errors.grade ? "border-red-300" : "border-gray-200 focus:border-orange-500"}`}
                   >
                     <option value="">เลือกระดับชั้น</option>
-                    <option value="m4">มัธยมศึกษาปีที่ 4</option>
-                    <option value="m5">มัธยมศึกษาปีที่ 5</option>
-                    <option value="m6">มัธยมศึกษาปีที่ 6</option>
+                    <option value="มัธยมศึกษาปีที่ 4">มัธยมศึกษาปีที่ 4</option>
+                    <option value="มัธยมศึกษาปีที่ 5">มัธยมศึกษาปีที่ 5</option>
+                    <option value="มัธยมศึกษาปีที่ 6">มัธยมศึกษาปีที่ 6</option>
                   </select>
                   <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
                     <ChevronDown size={18} />

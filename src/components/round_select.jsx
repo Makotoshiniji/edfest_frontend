@@ -13,14 +13,16 @@ import {
   Loader2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+// 1. นำเข้า axios มาใช้แทน fetch
+import axios from "../lib/axios";
 
 const ActivitySelection = () => {
   const navigate = useNavigate();
 
   // State
-  const [rounds, setRounds] = useState([]); // เก็บ Rounds จาก API
-  const [stations, setStations] = useState([]); // เก็บ Stations จาก API
-  const [seatsData, setSeatsData] = useState({}); // เก็บจำนวนที่นั่งคงเหลือ
+  const [rounds, setRounds] = useState([]);
+  const [stations, setStations] = useState([]);
+  const [seatsData, setSeatsData] = useState({});
 
   const [selectedMap, setSelectedMap] = useState({}); // { roundId: stationId }
   const [expandedSession, setExpandedSession] = useState(null);
@@ -34,44 +36,48 @@ const ActivitySelection = () => {
 
     const fetchData = async () => {
       try {
-        // 1. ดึง Master Data
-        const response = await fetch("http://76.13.179.18/api/initial-data");
-        const data = await response.json();
+        // 1. ดึง Master Data (ใช้ axios)
+        const response = await axios.get("/initial-data");
+        const data = response.data;
 
         setRounds(data.rounds);
         setStations(data.stations);
 
-        // Mockup Seats Data (เพราะยังไม่มี API นับจำนวนที่นั่งจริง)
+        // Mockup Seats Data
         const initialSeats = {};
         data.rounds.forEach((round) => {
           data.stations.forEach((station) => {
-            // สมมติว่าทุกฐานรับได้ 40 คน (หรือดึงจาก station.capacity_limit)
             initialSeats[`${round.id}-${station.id}`] =
               station.capacity_limit || 40;
           });
         });
         setSeatsData(initialSeats);
 
-        // 2. ดึงข้อมูลที่เคยจองไว้ (ถ้ามี)
-        const token = localStorage.getItem("token");
+        // 2. ดึงข้อมูลที่เคยจองไว้ (เช็คจาก auth_token)
+        const token = localStorage.getItem("auth_token");
         if (token) {
-          const regResponse = await fetch(
-            "http://76.13.179.18/api/my-registrations",
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            },
-          );
-          if (regResponse.ok) {
-            const regData = await regResponse.json();
+          try {
+            // ไม่ต้องใส่ Header เองแล้ว axios ทำให้
+            const regResponse = await axios.get("/my-registrations");
+            const regData = regResponse.data;
+
             const initialMap = {};
             regData.forEach((reg) => {
               initialMap[reg.round_id] = reg.station_id;
             });
             setSelectedMap(initialMap);
+          } catch (err) {
+            // ถ้า Token หมดอายุ (401) ให้เคลียร์ค่าทิ้ง แต่ยังให้ดูหน้าเลือกได้อยู่
+            if (err.response && err.response.status === 401) {
+              localStorage.removeItem("auth_token");
+              localStorage.removeItem("user");
+            }
+            console.error("Fetch registration error:", err);
           }
         }
       } catch (error) {
         console.error("Error fetching data:", error);
+        showToast("ไม่สามารถดึงข้อมูลได้");
       }
     };
 
@@ -86,7 +92,6 @@ const ActivitySelection = () => {
 
     // Toggle Logic
     if (currentSelection === stationId) {
-      // ยกเลิกการเลือก
       const newMap = { ...selectedMap };
       delete newMap[roundId];
       setSelectedMap(newMap);
@@ -126,11 +131,13 @@ const ActivitySelection = () => {
 
   const handleConfirm = async () => {
     setIsSubmitting(true);
-    const token = localStorage.getItem("token");
+    // ✅ ใช้ auth_token ให้ถูกต้อง
+    const token = localStorage.getItem("auth_token");
 
     if (!token) {
       showToast("กรุณาเข้าสู่ระบบก่อนทำรายการ");
-      navigate("/login");
+      // หน่วงเวลานิดนึงก่อนเด้งไป
+      setTimeout(() => navigate("/login"), 1000);
       return;
     }
 
@@ -141,29 +148,24 @@ const ActivitySelection = () => {
     }));
 
     try {
-      // ยิงไปที่ API Sync ตัวใหม่
-      const response = await fetch(
-        "http://76.13.179.18/api/registrations/sync",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ registrations: payload }), // ส่งไปทีเดียว
-        },
-      );
+      // ✅ ใช้ axios ยิงไปที่ API Sync
+      const response = await axios.post("/registrations/sync", {
+        registrations: payload,
+      });
 
-      if (response.ok) {
+      if (response.status === 200 || response.status === 201) {
         showToast("บันทึกข้อมูลสำเร็จ!");
         setTimeout(() => navigate("/user_dashboard"), 1500);
-      } else {
-        const err = await response.json();
-        showToast(err.message || "เกิดข้อผิดพลาดในการบันทึก");
       }
     } catch (error) {
       console.error(error);
-      showToast("ไม่สามารถเชื่อมต่อ Server ได้");
+      const msg = error.response?.data?.message || "เกิดข้อผิดพลาดในการบันทึก";
+      showToast(msg);
+
+      if (error.response?.status === 401) {
+        localStorage.removeItem("auth_token");
+        setTimeout(() => navigate("/login"), 1500);
+      }
     } finally {
       setIsSubmitting(false);
     }
