@@ -13,7 +13,6 @@ import {
   Loader2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-// 1. นำเข้า axios มาใช้แทน fetch
 import axios from "../lib/axios";
 
 const ActivitySelection = () => {
@@ -23,94 +22,106 @@ const ActivitySelection = () => {
   const [rounds, setRounds] = useState([]);
   const [stations, setStations] = useState([]);
   const [seatsData, setSeatsData] = useState({});
-
-  const [selectedMap, setSelectedMap] = useState({}); // { roundId: stationId }
-  const [expandedSession, setExpandedSession] = useState(null);
+  const [selectedMap, setSelectedMap] = useState({});
+  const [expandedSession, setExpandedSession] = useState(null); // อยากให้เปิดรอบแรกเลยไหม? ถ้าอยาก ใส่ 1 แทน null
   const [toastMessage, setToastMessage] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Initial Setup
+  // Initial Setup & Polling
   useEffect(() => {
     setIsLoaded(true);
 
     const fetchData = async () => {
       try {
-        // 1. ดึง Master Data (ใช้ axios)
+        // 1. ดึง Master Data
         const response = await axios.get("/initial-data");
         const data = response.data;
 
         setRounds(data.rounds);
         setStations(data.stations);
 
-        // Mockup Seats Data
+        // 2. คำนวณที่นั่งว่าง
         const initialSeats = {};
+
+        // ตั้งค่า Capacity เริ่มต้น
         data.rounds.forEach((round) => {
           data.stations.forEach((station) => {
             initialSeats[`${round.id}-${station.id}`] =
               station.capacity_limit || 40;
           });
         });
+
+        // หักลบยอดจอง (จาก Backend)
+        if (data.reserved_seats) {
+          data.reserved_seats.forEach((item) => {
+            const key = `${item.round_id}-${item.station_id}`;
+            if (initialSeats[key] !== undefined) {
+              initialSeats[key] = initialSeats[key] - item.count;
+            }
+          });
+        }
         setSeatsData(initialSeats);
 
-        // 2. ดึงข้อมูลที่เคยจองไว้ (เช็คจาก auth_token)
+        // 3. ดึงข้อมูลการจองของ User (เฉพาะครั้งแรกหรือเมื่อจำเป็น)
+        // หมายเหตุ: ถ้าจะให้ Polling ทำงานเร็วขึ้น อาจจะแยกส่วนนี้ออกจาก loop interval ก็ได้
         const token = localStorage.getItem("auth_token");
         if (token) {
+          // ... (Logic เดิมของคุณถูกต้องแล้ว)
           try {
-            // ไม่ต้องใส่ Header เองแล้ว axios ทำให้
             const regResponse = await axios.get("/my-registrations");
             const regData = regResponse.data;
-
             const initialMap = {};
             regData.forEach((reg) => {
               initialMap[reg.round_id] = reg.station_id;
             });
-            setSelectedMap(initialMap);
+            // ใช้ Functional Update เพื่อป้องกันการเขียนทับ State ที่ User กำลังเลือกอยู่
+            setSelectedMap((prev) =>
+              Object.keys(prev).length === 0 ? initialMap : prev,
+            );
           } catch (err) {
-            // ถ้า Token หมดอายุ (401) ให้เคลียร์ค่าทิ้ง แต่ยังให้ดูหน้าเลือกได้อยู่
             if (err.response && err.response.status === 401) {
               localStorage.removeItem("auth_token");
               localStorage.removeItem("user");
             }
-            console.error("Fetch registration error:", err);
           }
         }
       } catch (error) {
         console.error("Error fetching data:", error);
-        showToast("ไม่สามารถดึงข้อมูลได้");
       }
     };
 
+    // เรียกครั้งแรกทันที
     fetchData();
+
+    // ตั้งเวลาดึงข้อมูลใหม่ทุก 10 วินาที
+    const intervalId = setInterval(fetchData, 10000);
+
+    // Cleanup function
+    return () => clearInterval(intervalId);
+
+    // ❌ ลบบรรทัด fetchData() ที่อยู่ตรงนี้ออก (Unreachable code)
   }, []);
 
-  // Logic Helpers
+  // ... (ส่วน Logic Helpers และ Render อื่นๆ ถูกต้องแล้วครับ) ...
+
   const getSelectedCount = () => Object.keys(selectedMap).length;
 
   const handleSelect = (roundId, stationId) => {
     const currentSelection = selectedMap[roundId];
-
-    // Toggle Logic
     if (currentSelection === stationId) {
       const newMap = { ...selectedMap };
       delete newMap[roundId];
       setSelectedMap(newMap);
       return;
     }
-
-    // Check Quota (Max 4)
     if (!currentSelection && getSelectedCount() >= 4) {
       showToast(
         "น้องเลือกครบ 4 รอบแล้วครับ หากต้องการเปลี่ยน กรุณายกเลิกรายการเดิมก่อน",
       );
       return;
     }
-
-    // Select
-    setSelectedMap((prev) => ({
-      ...prev,
-      [roundId]: stationId,
-    }));
+    setSelectedMap((prev) => ({ ...prev, [roundId]: stationId }));
   };
 
   const handleClearAll = () => {
@@ -131,24 +142,20 @@ const ActivitySelection = () => {
 
   const handleConfirm = async () => {
     setIsSubmitting(true);
-    // ✅ ใช้ auth_token ให้ถูกต้อง
     const token = localStorage.getItem("auth_token");
 
     if (!token) {
       showToast("กรุณาเข้าสู่ระบบก่อนทำรายการ");
-      // หน่วงเวลานิดนึงก่อนเด้งไป
       setTimeout(() => navigate("/login"), 1000);
       return;
     }
 
-    // แปลงข้อมูลที่เลือก เป็น Array ก้อนเดียว
     const payload = Object.entries(selectedMap).map(([rId, sId]) => ({
       round_id: parseInt(rId),
       station_id: sId,
     }));
 
     try {
-      // ✅ ใช้ axios ยิงไปที่ API Sync
       const response = await axios.post("/registrations/sync", {
         registrations: payload,
       });
@@ -171,7 +178,6 @@ const ActivitySelection = () => {
     }
   };
 
-  // ถ้าข้อมูลยังไม่มา ให้แสดง Loading
   if (rounds.length === 0 || stations.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">

@@ -1,7 +1,10 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: "http://76.13.179.18/api",
+  // ⚠️ แก้ตรงนี้: เปลี่ยนจาก IP เป็นโดเมนของคุณ
+  // อย่าลืมเติม /api ต่อท้ายเหมือนเดิม
+  baseURL: "https://www.edfest-kku.com/api",
+
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -9,17 +12,17 @@ const axiosInstance = axios.create({
   },
 });
 
+// ... ส่วน Interceptor ด้านล่างเหมือนเดิมครับ ...
 // Request Interceptor
 axiosInstance.interceptors.request.use((config) => {
   const token = localStorage.getItem("auth_token");
-  // เช็คว่ามี token และไม่ใช่ค่า null/undefined
   if (token && token !== "undefined" && token !== "null") {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-// Response Interceptor (Auto Logout 401)
+// Response Interceptor
 axiosInstance.interceptors.response.use(
   (response) => {
     return response;
