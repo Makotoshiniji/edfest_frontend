@@ -8,12 +8,14 @@ import {
   RotateCcw,
   Loader2,
 } from "lucide-react";
-import { useLocation, useNavigate, Link } from "react-router-dom"; // Import เพิ่ม
+import { useLocation, useNavigate, Link } from "react-router-dom";
+// ✅ 1. นำเข้า axios ที่เราตั้งค่า HTTPS ไว้แล้ว
+import axios from "../lib/axios";
 
 const OtpVerification = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const email = location.state?.email || ""; // รับ email มาจากหน้าก่อน
+  const email = location.state?.email || "";
 
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
@@ -25,7 +27,6 @@ const OtpVerification = () => {
 
   const inputRefs = useRef([]);
 
-  // ถ้าไม่มี email (เช่นเข้าผ่าน URL ตรงๆ) ให้ดีดกลับไปหน้า Forgot
   useEffect(() => {
     if (!email) {
       navigate("/forgot-password");
@@ -33,7 +34,6 @@ const OtpVerification = () => {
     setIsLoaded(true);
   }, [email, navigate]);
 
-  // Countdown Timer
   useEffect(() => {
     let timer;
     if (countdown > 0) {
@@ -42,7 +42,6 @@ const OtpVerification = () => {
     return () => clearInterval(timer);
   }, [countdown]);
 
-  // Handle Input Change
   const handleChange = (index, value) => {
     if (isNaN(value)) return;
 
@@ -56,7 +55,6 @@ const OtpVerification = () => {
     }
   };
 
-  // Handle Backspace
   const handleKeyDown = (index, e) => {
     if (
       e.key === "Backspace" &&
@@ -68,7 +66,6 @@ const OtpVerification = () => {
     }
   };
 
-  // Handle Paste
   const handlePaste = (e) => {
     e.preventDefault();
     const data = e.clipboardData.getData("text").trim();
@@ -88,33 +85,31 @@ const OtpVerification = () => {
     inputRefs.current[nextIndex].focus();
   };
 
-  // Handle Resend (ต้องยิง API ขอใหม่)
+  // ✅ 2. แก้ไขฟังก์ชัน handleResend ให้ใช้ axios
   const handleResend = async () => {
     if (countdown > 0) return;
 
-    // ยิง API ขอ OTP ใหม่ (เหมือนหน้า Forgot Password)
     try {
-      const response = await fetch("http://76.13.179.18/api/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
+      // ไม่ต้องใส่ domain เต็ม ใส่แค่ path พอ (axios จะไปต่อกับ baseURL เอง)
+      const response = await axios.post("/forgot-password", { email });
 
-      if (response.ok) {
+      if (response.status === 200) {
         setCountdown(60);
         setOtp(["", "", "", "", "", ""]);
         setError("");
         inputRefs.current[0].focus();
         alert("ส่งรหัส OTP ใหม่เรียบร้อยแล้ว");
-      } else {
-        alert("ไม่สามารถส่งรหัส OTP ได้ กรุณาลองใหม่");
       }
     } catch (error) {
-      alert("เชื่อมต่อ Server ไม่ได้");
+      console.error(error);
+      const msg =
+        error.response?.data?.message ||
+        "ไม่สามารถส่งรหัส OTP ได้ กรุณาลองใหม่";
+      alert(msg);
     }
   };
 
-  // Submit Logic (Verify OTP)
+  // ✅ 3. แก้ไขฟังก์ชัน handleSubmit ให้ใช้ axios
   const handleSubmit = async (e) => {
     e.preventDefault();
     const otpValue = otp.join("");
@@ -125,34 +120,29 @@ const OtpVerification = () => {
     setError("");
 
     try {
-      // ยิง API ตรวจสอบ OTP
-      const response = await fetch("http://76.13.179.18/api/verify-otp", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({ email, otp: otpValue }),
+      // ใช้ axios ยิงไปที่ /verify-otp
+      const response = await axios.post("/verify-otp", {
+        email,
+        otp: otpValue,
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (response.status === 200) {
         setIsSuccess(true);
-        // รอแป๊บนึง แล้วพาไปหน้า Reset Password พร้อมแนบ OTP ไปด้วย
+        // ส่งต่อไปหน้า Reset Password
         setTimeout(() => {
           navigate("/reset_password", { state: { email, otp: otpValue } });
         }, 1000);
-      } else {
-        // OTP ผิด
-        setError(data.message || "รหัส OTP ไม่ถูกต้อง");
-        setIsShake(true);
-        setTimeout(() => setIsShake(false), 500);
-        setOtp(["", "", "", "", "", ""]);
-        inputRefs.current[0].focus();
       }
     } catch (err) {
-      setError("เชื่อมต่อ Server ไม่ได้");
+      console.error(err);
+      // ดึง Error Message จาก Backend มาแสดง
+      const msg = err.response?.data?.message || "รหัส OTP ไม่ถูกต้อง";
+
+      setError(msg);
+      setIsShake(true);
+      setTimeout(() => setIsShake(false), 500);
+      setOtp(["", "", "", "", "", ""]);
+      inputRefs.current[0].focus();
     } finally {
       setIsLoading(false);
     }

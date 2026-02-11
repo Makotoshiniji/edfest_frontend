@@ -23,6 +23,7 @@ const ActivitySelection = () => {
   const [stations, setStations] = useState([]);
   const [seatsData, setSeatsData] = useState({});
   const [selectedMap, setSelectedMap] = useState({});
+  const [savedStationMap, setSavedStationMap] = useState({});
   const [expandedSession, setExpandedSession] = useState(null); // อยากให้เปิดรอบแรกเลยไหม? ถ้าอยาก ใส่ 1 แทน null
   const [toastMessage, setToastMessage] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -34,17 +35,21 @@ const ActivitySelection = () => {
 
     const fetchData = async () => {
       try {
-        // 1. ดึง Master Data
+        // ---------------------------------------------------------
+        // 1. ดึง Master Data (Stations, Rounds, Reserved Seats)
+        // ---------------------------------------------------------
         const response = await axios.get("/initial-data");
         const data = response.data;
 
         setRounds(data.rounds);
         setStations(data.stations);
 
-        // 2. คำนวณที่นั่งว่าง
+        // ---------------------------------------------------------
+        // 2. คำนวณที่นั่งว่างจากข้อมูล Server (Server Side Calculation)
+        // ---------------------------------------------------------
         const initialSeats = {};
 
-        // ตั้งค่า Capacity เริ่มต้น
+        // 2.1 ตั้งค่า Default Capacity ให้ครบทุกช่อง
         data.rounds.forEach((round) => {
           data.stations.forEach((station) => {
             initialSeats[`${round.id}-${station.id}`] =
@@ -52,42 +57,55 @@ const ActivitySelection = () => {
           });
         });
 
-        // หักลบยอดจอง (จาก Backend)
+        // 2.2 หักลบยอดจองที่เกิดขึ้นจริงใน DB (ข้อมูลจาก reserved_seats)
         if (data.reserved_seats) {
           data.reserved_seats.forEach((item) => {
             const key = `${item.round_id}-${item.station_id}`;
+            // ตรวจสอบว่ามี Key นี้อยู่จริงไหม แล้วลบจำนวนคนจองออก
             if (initialSeats[key] !== undefined) {
               initialSeats[key] = initialSeats[key] - item.count;
             }
           });
         }
+
         setSeatsData(initialSeats);
 
-        // 3. ดึงข้อมูลการจองของ User (เฉพาะครั้งแรกหรือเมื่อจำเป็น)
-        // หมายเหตุ: ถ้าจะให้ Polling ทำงานเร็วขึ้น อาจจะแยกส่วนนี้ออกจาก loop interval ก็ได้
+        // ---------------------------------------------------------
+        // 3. ดึงข้อมูลการจองของ User (เพื่อดูว่าเราจองอะไรไว้)
+        // ---------------------------------------------------------
         const token = localStorage.getItem("auth_token");
         if (token) {
-          // ... (Logic เดิมของคุณถูกต้องแล้ว)
           try {
             const regResponse = await axios.get("/my-registrations");
             const regData = regResponse.data;
+
+            // แปลงข้อมูลเป็น Map { round_id: station_id }
             const initialMap = {};
             regData.forEach((reg) => {
               initialMap[reg.round_id] = reg.station_id;
             });
-            // ใช้ Functional Update เพื่อป้องกันการเขียนทับ State ที่ User กำลังเลือกอยู่
-            setSelectedMap((prev) =>
-              Object.keys(prev).length === 0 ? initialMap : prev,
-            );
+
+            // 3.1 อัปเดต State การเลือก (SelectedMap)
+            setSelectedMap((prev) => {
+              // ถ้า user ยังไม่ได้เลือกอะไรเองในหน้าจอนี้ ให้ใช้ค่าจาก DB
+              // แต่ถ้า user เลือกค้างไว้ (เช่นเน็ตหลุดแล้วต่อใหม่) ให้คงค่าเดิมไว้
+              return Object.keys(prev).length === 0 ? initialMap : prev;
+            });
+
+            // 🔥 3.2 บันทึก "ค่าตั้งต้นจาก DB" (สำคัญมากสำหรับ Logic คำนวณเลข Real-time)
+            setSavedStationMap(initialMap);
           } catch (err) {
+            // กรณี Token หมดอายุ หรือมีปัญหาอื่นๆ
             if (err.response && err.response.status === 401) {
               localStorage.removeItem("auth_token");
               localStorage.removeItem("user");
             }
+            console.error("Fetch registration error:", err);
           }
         }
       } catch (error) {
         console.error("Error fetching data:", error);
+        showToast("ไม่สามารถดึงข้อมูลได้");
       }
     };
 
@@ -333,7 +351,27 @@ const ActivitySelection = () => {
                         {/* Loop Stations (Majors) */}
                         {stations.map((station) => {
                           const seatsKey = `${round.id}-${station.id}`;
-                          const remaining = seatsData[seatsKey] || 0;
+
+                          // --- 🔥 เริ่มแก้ตรงนี้ ---
+                          // 1. เอาจำนวนว่างจาก Server เป็นตัวตั้ง
+                          let remaining = seatsData[seatsKey] || 0;
+
+                          const isSavedHere =
+                            savedStationMap[round.id] === station.id;
+                          const isSelectedHere =
+                            selectedMap[round.id] === station.id;
+
+                          // 2. ถ้าเราเคยจองที่นี่ไว้ใน DB ให้ +1 คืนกลับไปก่อน (เสมือนว่าเราลุกออก เพื่อรอเลือกใหม่)
+                          if (isSavedHere) {
+                            remaining += 1;
+                          }
+
+                          // 3. ถ้าเรากำลังเลือกที่นี่ในหน้าจอ ให้ -1 (เสมือนว่าเรานั่งลงไป)
+                          if (isSelectedHere) {
+                            remaining -= 1;
+                          }
+                          // --- จบการแก้ ---
+
                           const isFull = remaining <= 0;
                           const isActive = selectedMap[round.id] === station.id;
 
